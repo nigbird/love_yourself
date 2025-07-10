@@ -64,7 +64,7 @@ export default function HomePage() {
           transition={{ duration: 0.5 }}
           className="text-4xl md:text-5xl font-bold font-headline text-primary"
         >
-          Welcome to Love Yourself
+          Hello love, let’s bloom slowly
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -72,8 +72,7 @@ export default function HomePage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg text-muted-foreground max-w-2xl mx-auto"
         >
-          Your personal space for growth, reflection, and self-care. Choose a
-          path to begin your journey.
+          Your personal sanctuary for growth and reflection. Begin your journey below.
         </motion.p>
       </div>
 
