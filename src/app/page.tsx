@@ -1,123 +1,90 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { Card, CardContent } from '@/components/ui/card';
+import { Flower2, BookHeart, Target, BarChart2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Home, Flower2, BookHeart, Target, BarChart2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const navItems = [
   {
     href: '/routines',
     label: 'Routines',
     icon: Flower2,
-    position: 'top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+20px)]',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-50',
   },
   {
     href: '/goals',
     label: 'Goals',
     icon: Target,
-    position: 'top-1/2 right-0 translate-x-[calc(100%+20px)] -translate-y-1/2',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-50',
   },
   {
     href: '/journal',
     label: 'Journal',
     icon: BookHeart,
-    position: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-[calc(100%+20px)]',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-50',
   },
   {
     href: '/analytics',
     label: 'Analytics',
     icon: BarChart2,
-    position: 'top-1/2 left-0 -translate-x-[calc(100%+20px)] -translate-y-1/2',
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-50',
   },
 ];
 
-const NavButton = ({
-  href,
-  label,
-  icon: Icon,
-  position,
-  className,
-}: {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  position: string;
-  className?: string;
-}) => (
-  <Link href={href} passHref>
-    <motion.div
-      className={cn('absolute', position)}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <div className="relative group">
-        <div
-          className={cn(
-            'relative z-10 flex items-center justify-center w-24 h-24 rounded-full bg-card shadow-lg border-2 border-primary/50 cursor-pointer transition-all duration-300 group-hover:border-primary',
-            className
-          )}
-        >
-          <Icon className="w-10 h-10 text-primary/80 group-hover:text-primary" />
-        </div>
-        <div className="absolute inset-0 bg-primary rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-all duration-300 animate-pulse-slow"></div>
-        <p className="text-center text-sm font-medium text-foreground/80 mt-2 absolute -bottom-8 left-0 right-0">
-          {label}
+export default function HomePage() {
+  return (
+    <div className="flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary">
+          Welcome to Bloom Daily
+        </h1>
+        <p className="text-muted-foreground mt-2 text-lg">
+          Your personal space for growth and reflection.
         </p>
       </div>
-    </motion.div>
-  </Link>
-);
 
-export default function CircularHomePage() {
-  return (
-    <main className="flex items-center justify-center min-h-screen w-full bg-background overflow-hidden">
-      <div className="relative w-48 h-48 flex items-center justify-center">
-        {/* Central Core */}
-        <motion.div
-          animate={{ scale: [1, 1.05, 1], rotate: 360 }}
-          transition={{
-            duration: 20,
-            ease: 'linear',
-            repeat: Infinity,
-          }}
-          className="absolute w-full h-full"
-        >
-          <div className="w-full h-full rounded-full bg-primary/10 border border-primary/20"></div>
-        </motion.div>
-        <motion.div
-          animate={{ scale: [1, 1.02, 1], rotate: -360 }}
-          transition={{
-            duration: 30,
-            ease: 'linear',
-            repeat: Infinity,
-            delay: 2,
-          }}
-          className="absolute w-3/4 h-3/4"
-        >
-          <div className="w-full h-full rounded-full bg-accent/10 border border-accent/20"></div>
-        </motion.div>
-        <div className="relative z-10 flex items-center justify-center w-32 h-32 rounded-full bg-card shadow-2xl">
-          <Home className="w-12 h-12 text-primary" />
-        </div>
-
-        {/* Navigation Buttons */}
-        {navItems.map((item) => (
-          <NavButton key={item.href} {...item} />
-        ))}
-      </div>
-    </main>
+      <Carousel
+        opts={{
+          align: 'start',
+          loop: true,
+        }}
+        className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl"
+      >
+        <CarouselContent>
+          {navItems.map((item, index) => (
+            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+              <div className="p-1">
+                <Link href={item.href}>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Card className={`overflow-hidden transition-all hover:shadow-xl hover:border-primary/50 ${item.bgColor}`}>
+                      <CardContent className="flex flex-col aspect-square items-center justify-center p-6 gap-4">
+                        <div className={`p-4 rounded-full bg-white shadow-inner`}>
+                          <item.icon className={`w-12 h-12 ${item.color}`} />
+                        </div>
+                        <span className="text-xl font-semibold text-foreground/80">{item.label}</span>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Link>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
+    </div>
   );
 }
-
-// Add custom animation to tailwind config
-// tailwind.config.ts
-/*
-...
-      animation: {
-        ...
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-...
-*/
