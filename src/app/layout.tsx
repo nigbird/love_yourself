@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={alegreya.variable}>
+    <html lang="en" suppressHydrationWarning className={`${alegreya.variable} dark`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

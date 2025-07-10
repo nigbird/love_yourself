@@ -36,11 +36,11 @@ export function JournalPrompt() {
   };
 
   return (
-    <Card>
+    <Card className="bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>Journal Prompt Generator</CardTitle>
+        <CardTitle>Prompt Generator</CardTitle>
         <CardDescription>
-          Feeling stuck? Generate a prompt to get your thoughts flowing.
+          Feeling stuck? Generate a prompt.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -48,7 +48,7 @@ export function JournalPrompt() {
           <Label htmlFor="topic-input">Optional Topic</Label>
           <Input
             id="topic-input"
-            placeholder="e.g., Gratitude, a challenge I'm facing..."
+            placeholder="e.g., Gratitude, a challenge..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
           />
@@ -66,8 +66,8 @@ export function JournalPrompt() {
           Generate Prompt
         </Button>
         {prompt && (
-          <div className="mt-4 rounded-lg border bg-accent/50 p-4">
-            <p className="text-accent-foreground">{prompt}</p>
+          <div className="mt-4 rounded-lg border border-accent/20 bg-accent/10 p-4">
+            <p className="text-accent-foreground/90">{prompt}</p>
           </div>
         )}
       </CardContent>
