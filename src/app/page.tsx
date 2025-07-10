@@ -1,167 +1,123 @@
-import { AppShell } from "@/components/layout/app-shell";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { GoalCompletionChart } from "@/components/dashboard-charts";
-import { JournalPrompt } from "@/components/journal-prompt";
-import {
-  Target,
-  BookHeart,
-  CheckCircle2,
-  ArrowRight,
-} from "lucide-react";
-import Link from "next/link";
+'use client';
 
-const goals = [
-  { title: "Gain 8kg in 3 months", progress: 25, category: "Personal" },
-  { title: "Read Bible book X in 1 week", progress: 80, category: "Spiritual" },
-  { title: "Finish skincare course", progress: 50, category: "Personal" },
-];
+import React from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Home, Flower2, BookHeart, Target, BarChart2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const journalEntries = [
+const navItems = [
   {
-    id: 1,
-    date: "July 20, 2024",
-    excerpt: "Today was a really productive day. I managed to...",
+    href: '/routines',
+    label: 'Routines',
+    icon: Flower2,
+    position: 'top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+20px)]',
   },
   {
-    id: 2,
-    date: "July 19, 2024",
-    excerpt: "Felt a bit down, but I'm trying to focus on...",
+    href: '/goals',
+    label: 'Goals',
+    icon: Target,
+    position: 'top-1/2 right-0 translate-x-[calc(100%+20px)] -translate-y-1/2',
   },
   {
-    id: 3,
-    date: "July 18, 2024",
-    excerpt: "A small win today! I finally organized my...",
+    href: '/journal',
+    label: 'Journal',
+    icon: BookHeart,
+    position: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-[calc(100%+20px)]',
+  },
+  {
+    href: '/analytics',
+    label: 'Analytics',
+    icon: BarChart2,
+    position: 'top-1/2 left-0 -translate-x-[calc(100%+20px)] -translate-y-1/2',
   },
 ];
 
-export default function DashboardPage() {
-  return (
-    <AppShell>
-      <div className="flex flex-col gap-8">
-        <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight">
-            Welcome back, User!
-          </h1>
-          <p className="text-muted-foreground">
-            Here's your self-care snapshot for today.
-          </p>
+const NavButton = ({
+  href,
+  label,
+  icon: Icon,
+  position,
+  className,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  position: string;
+  className?: string;
+}) => (
+  <Link href={href} passHref>
+    <motion.div
+      className={cn('absolute', position)}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <div className="relative group">
+        <div
+          className={cn(
+            'relative z-10 flex items-center justify-center w-24 h-24 rounded-full bg-card shadow-lg border-2 border-primary/50 cursor-pointer transition-all duration-300 group-hover:border-primary',
+            className
+          )}
+        >
+          <Icon className="w-10 h-10 text-primary/80 group-hover:text-primary" />
         </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Active Goals</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">
-                +2 since last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Completed Routines
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">5</div>
-              <p className="text-xs text-muted-foreground">This week</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Journal Entries
-              </CardTitle>
-              <BookHeart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground">
-                Total entries this month
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <GoalCompletionChart />
-          </div>
-          <div className="lg:col-span-2">
-            <JournalPrompt />
-          </div>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ongoing Goals</CardTitle>
-              <CardDescription>
-                Keep up the great work on your current goals.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {goals.map((goal) => (
-                <div key={goal.title}>
-                  <div className="flex justify-between items-baseline mb-1">
-                    <p className="font-medium">{goal.title}</p>
-                    <span className="text-sm text-muted-foreground">
-                      {goal.progress}%
-                    </span>
-                  </div>
-                  <Progress value={goal.progress} />
-                </div>
-              ))}
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" asChild>
-                <Link href="/goals">
-                  View All Goals <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Journal Entries</CardTitle>
-              <CardDescription>
-                A look back at your recent reflections.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {journalEntries.map((entry) => (
-                <div key={entry.id} className="border-l-2 border-primary pl-4">
-                  <p className="text-sm font-medium">{entry.date}</p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {entry.excerpt}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" asChild>
-                <Link href="/journal">
-                  Go to Journal <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
+        <div className="absolute inset-0 bg-primary rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-all duration-300 animate-pulse-slow"></div>
+        <p className="text-center text-sm font-medium text-foreground/80 mt-2 absolute -bottom-8 left-0 right-0">
+          {label}
+        </p>
       </div>
-    </AppShell>
+    </motion.div>
+  </Link>
+);
+
+export default function CircularHomePage() {
+  return (
+    <main className="flex items-center justify-center min-h-screen w-full bg-background overflow-hidden">
+      <div className="relative w-48 h-48 flex items-center justify-center">
+        {/* Central Core */}
+        <motion.div
+          animate={{ scale: [1, 1.05, 1], rotate: 360 }}
+          transition={{
+            duration: 20,
+            ease: 'linear',
+            repeat: Infinity,
+          }}
+          className="absolute w-full h-full"
+        >
+          <div className="w-full h-full rounded-full bg-primary/10 border border-primary/20"></div>
+        </motion.div>
+        <motion.div
+          animate={{ scale: [1, 1.02, 1], rotate: -360 }}
+          transition={{
+            duration: 30,
+            ease: 'linear',
+            repeat: Infinity,
+            delay: 2,
+          }}
+          className="absolute w-3/4 h-3/4"
+        >
+          <div className="w-full h-full rounded-full bg-accent/10 border border-accent/20"></div>
+        </motion.div>
+        <div className="relative z-10 flex items-center justify-center w-32 h-32 rounded-full bg-card shadow-2xl">
+          <Home className="w-12 h-12 text-primary" />
+        </div>
+
+        {/* Navigation Buttons */}
+        {navItems.map((item) => (
+          <NavButton key={item.href} {...item} />
+        ))}
+      </div>
+    </main>
   );
 }
+
+// Add custom animation to tailwind config
+// tailwind.config.ts
+/*
+...
+      animation: {
+        ...
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+...
+*/
