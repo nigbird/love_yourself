@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +16,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import type { Routine, RoutineFrequency } from '@/domain/entities/routine.entity';
+import type { Routine } from '@/domain/entities/routine.entity';
+import { useEffect } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -32,6 +32,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface CreateRoutineFormProps {
   onRoutineCreated: (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
+  routineToEdit?: Routine;
 }
 
 const weekDays = [
@@ -44,8 +45,8 @@ const weekDays = [
     { label: 'S', value: '6' },
 ];
 
-export function CreateRoutineForm({ onRoutineCreated }: CreateRoutineFormProps) {
-  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<FormValues>({
+export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRoutineFormProps) {
+  const { register, handleSubmit, control, watch, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
@@ -56,6 +57,28 @@ export function CreateRoutineForm({ onRoutineCreated }: CreateRoutineFormProps) 
       remindersEnabled: true,
     },
   });
+
+  useEffect(() => {
+    if (routineToEdit) {
+      reset({
+        name: routineToEdit.name,
+        frequency: routineToEdit.frequency,
+        daysOfWeek: routineToEdit.daysOfWeek || [],
+        timeOfDay: routineToEdit.timeOfDay || '08:00',
+        rewardPoints: routineToEdit.rewardPoints,
+        remindersEnabled: routineToEdit.remindersEnabled,
+      });
+    } else {
+      reset({
+        name: '',
+        frequency: 'daily',
+        daysOfWeek: [],
+        timeOfDay: '08:00',
+        rewardPoints: 10,
+        remindersEnabled: true,
+      });
+    }
+  }, [routineToEdit, reset]);
 
   const watchedFrequency = watch('frequency');
 
@@ -78,7 +101,7 @@ export function CreateRoutineForm({ onRoutineCreated }: CreateRoutineFormProps) 
                 control={control}
                 name="frequency"
                 render={({ field }) => (
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} value={field.value}>
                         <SelectTrigger id="frequency">
                             <SelectValue placeholder="Select frequency" />
                         </SelectTrigger>
@@ -110,7 +133,7 @@ export function CreateRoutineForm({ onRoutineCreated }: CreateRoutineFormProps) 
                         type="multiple" 
                         variant="outline" 
                         className="justify-start"
-                        value={field.value?.map(String)}
+                        value={field.value?.map(String) || []}
                         onValueChange={(value) => field.onChange(value.map(Number))}
                     >
                         {weekDays.map(day => (
