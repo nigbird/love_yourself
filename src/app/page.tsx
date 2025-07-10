@@ -64,7 +64,7 @@ export default function HomePage() {
           transition={{ duration: 0.5 }}
           className="text-4xl md:text-5xl font-bold font-headline text-primary"
         >
-          Welcome to Bloom Daily
+          Welcome to Love Yourself
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -85,17 +85,18 @@ export default function HomePage() {
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-4">
+          <CarouselContent className="-ml-4 justify-center">
             {navItems.map((item, index) => (
-              <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+              <CarouselItem key={index} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                 <div className="p-1">
                   <motion.div
                     whileHover={{ scale: 1.05, y: -5 }}
                     whileTap={{ scale: 0.95 }}
+                    className="flex justify-center"
                   >
                     <Link
                       href={item.href}
-                      className={`relative w-full h-48 rounded-2xl flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 overflow-hidden`}
+                      className={`relative w-40 h-40 rounded-full flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 overflow-hidden`}
                     >
                       <div
                         className="absolute inset-0 opacity-10"
