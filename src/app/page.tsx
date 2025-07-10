@@ -17,8 +17,8 @@ const navItems = [
     href: '/routines',
     label: 'Routines',
     icon: Flower2,
-    color: 'text-rose-500',
-    bgColor: 'bg-rose-50',
+    color: 'text-violet-500',
+    bgColor: 'bg-violet-50',
   },
   {
     href: '/goals',
@@ -68,10 +68,10 @@ export default function HomePage() {
               <div className="p-1">
                 <Link href={item.href}>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Card className={`overflow-hidden transition-all hover:shadow-xl hover:border-primary/50 ${item.bgColor}`}>
+                    <Card className="overflow-hidden transition-all hover:shadow-xl hover:border-primary/50">
                       <CardContent className="flex flex-col aspect-square items-center justify-center p-6 gap-4">
-                        <div className={`p-4 rounded-full bg-white shadow-inner`}>
-                          <item.icon className={`w-12 h-12 ${item.color}`} />
+                        <div className="p-4 rounded-full bg-white shadow-inner">
+                          <item.icon className="w-12 h-12 text-primary" />
                         </div>
                         <span className="text-xl font-semibold text-foreground/80">{item.label}</span>
                       </CardContent>
