@@ -89,10 +89,12 @@ export default function HomePage() {
             {navItems.map((item, index) => (
               <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
                 <div className="p-1">
-                  <Link href={item.href} legacyBehavior>
-                    <motion.a
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      whileTap={{ scale: 0.95 }}
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link
+                      href={item.href}
                       className={`relative w-full h-48 rounded-2xl flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 overflow-hidden`}
                     >
                       <div
@@ -109,8 +111,8 @@ export default function HomePage() {
                           {item.label}
                         </span>
                       </div>
-                    </motion.a>
-                  </Link>
+                    </Link>
+                  </motion.div>
                 </div>
               </CarouselItem>
             ))}
