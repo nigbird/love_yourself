@@ -40,7 +40,7 @@ const chartConfig = {
 
 export function GoalCompletionChart() {
   return (
-    <Card>
+    <Card className="bg-card/50 backdrop-blur-sm border-white/10">
       <CardHeader>
         <CardTitle>Monthly Goal Progress</CardTitle>
         <CardDescription>
