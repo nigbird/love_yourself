@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Flower2, BookHeart, Target, BarChart2 } from 'lucide-react';
+import { Flower2, BookHeart, Target, Gift } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Carousel,
@@ -44,9 +44,9 @@ const navItems: NavItem[] = [
     shadowColor: 'shadow-amber-500/50',
   },
   {
-    href: '/analytics',
-    label: 'Analytics',
-    icon: BarChart2,
+    href: '/wish',
+    label: 'Wish',
+    icon: Gift,
     color: 'text-sky-300',
     shadowColor: 'shadow-sky-500/50',
   },
@@ -84,9 +84,9 @@ export default function HomePage() {
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-4 justify-center">
+          <CarouselContent className="-ml-8 justify-center">
             {navItems.map((item, index) => (
-              <CarouselItem key={index} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+              <CarouselItem key={index} className="pl-8 basis-1/2 sm:basis-1/3 md:basis-1/4">
                 <div className="p-1">
                   <motion.div
                     whileHover={{ scale: 1.05, y: -5 }}
