@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { Analytics } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -45,10 +46,17 @@ const navItems: NavItem[] = [
   },
   {
     href: '/wish',
-    label: 'Wish',
+    label: 'Wishlist',
     icon: Gift,
     color: 'text-sky-300',
     shadowColor: 'shadow-sky-500/50',
+  },
+  {
+    href: '/analytics',
+    label: 'Analytics',
+    icon: Analytics,
+    color: 'text-indigo-300',
+    shadowColor: 'shadow-indigo-500/50',
   },
 ];
 
@@ -80,13 +88,13 @@ export default function HomePage() {
         <Carousel
           opts={{
             align: 'start',
-            loop: true,
+            loop: false,
           }}
           className="w-full"
         >
           <CarouselContent className="-ml-8 justify-center">
             {navItems.map((item, index) => (
-              <CarouselItem key={index} className="pl-8 basis-1/2 sm:basis-1/3 md:basis-1/4">
+              <CarouselItem key={index} className="pl-8 basis-auto sm:basis-1/3 md:basis-1/5">
                 <div className="p-1">
                   <motion.div
                     whileHover={{ scale: 1.05, y: -5 }}
