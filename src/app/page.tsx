@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Flower2, BookHeart, Target, Gift } from 'lucide-react';
+import { Flower2, BookHeart, Target, Gift, BarChart } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Carousel,
@@ -12,7 +12,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Analytics } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -54,7 +53,7 @@ const navItems: NavItem[] = [
   {
     href: '/analytics',
     label: 'Analytics',
-    icon: Analytics,
+    icon: BarChart,
     color: 'text-indigo-300',
     shadowColor: 'shadow-indigo-500/50',
   },
