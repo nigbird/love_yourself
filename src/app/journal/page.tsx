@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { PanelLeftClose, PanelLeftOpen, BookHeart, Trash2, Home } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, BookHeart, Trash2, Home, ImagePlus, Save } from "lucide-react";
 import Image from "next/image";
 import type { JournalEntry } from "@/domain/entities";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ export default function JournalPage() {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -137,6 +138,17 @@ export default function JournalPage() {
       toast({ title: "Entry Deleted", variant: 'destructive' });
   };
   
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && selectedEntry) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedEntry({ ...selectedEntry, imageUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const sortedEntries = [...entries].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
@@ -185,53 +197,56 @@ export default function JournalPage() {
       <div className="flex-1 pl-6">
         {selectedEntry ? (
           <div className="flex flex-col h-full gap-4">
-             <Card className="bg-card/50 backdrop-blur-sm">
-                <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center">
-                    <Input
-                      placeholder="Entry Title"
-                      className="text-2xl font-bold h-12 flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      value={selectedEntry.title}
-                      onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
-                    />
-                    <div className="flex gap-2">
-                        <Button onClick={handleSaveEntry}>Save Entry</Button>
-                        {!selectedEntry.id.startsWith('new-') && (
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="icon"><Trash2/></Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently delete this journal entry.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteEntry}>Delete</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
-                    </div>
-                </CardContent>
-             </Card>
             <div className="flex-1 grid grid-cols-3 gap-6">
-                <div className="col-span-3 lg:col-span-2 flex flex-col gap-4">
+                <Card className="col-span-3 lg:col-span-2 flex flex-col gap-4 bg-card/50 backdrop-blur-sm p-4 h-full">
+                   <div className="flex gap-2 items-center">
+                        <Input
+                            placeholder="Title"
+                            className="text-2xl font-bold h-12 flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+                            value={selectedEntry.title}
+                            onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
+                        />
+                        <div className="flex gap-2">
+                           <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="icon">
+                                <ImagePlus/>
+                           </Button>
+                           <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleImageUpload}
+                                className="hidden"
+                                accept="image/*"
+                            />
+                            <Button onClick={handleSaveEntry}><Save className="mr-2"/>Save</Button>
+                            {!selectedEntry.id.startsWith('new-') && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="icon"><Trash2/></Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete this journal entry.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteEntry}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                        </div>
+                   </div>
+                   <Separator/>
                    <Textarea
                         placeholder="Start writing..."
-                        className="flex-1 text-base resize-none"
+                        className="flex-1 text-base resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         value={selectedEntry.content}
                         onChange={(e) => setSelectedEntry({ ...selectedEntry, content: e.target.value })}
                     />
-                     <Input
-                        placeholder="Image URL (optional)"
-                        className="bg-card/80"
-                        value={selectedEntry.imageUrl || ''}
-                        onChange={(e) => setSelectedEntry({ ...selectedEntry, imageUrl: e.target.value })}
-                    />
-                </div>
+                </Card>
                 <div className="col-span-3 lg:col-span-1 flex flex-col gap-6">
                      {selectedEntry.imageUrl && (
                         <div className="aspect-video relative w-full rounded-lg overflow-hidden border">
