@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { PanelLeftClose, PanelLeftOpen, BookHeart, Trash2, Home, ImagePlus, Save } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, BookHeart, Trash2, Home, ImagePlus, Save, XCircle } from "lucide-react";
 import Image from "next/image";
 import type { JournalEntry } from "@/domain/entities";
 import { useToast } from "@/hooks/use-toast";
@@ -148,6 +148,13 @@ export default function JournalPage() {
     }
   };
 
+  const handleRemoveImage = () => {
+    if (selectedEntry) {
+        const { imageUrl, ...rest } = selectedEntry;
+        setSelectedEntry(rest as JournalEntry);
+    }
+  };
+
   const sortedEntries = [...entries].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
@@ -210,7 +217,7 @@ export default function JournalPage() {
                         onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
                     />
                     <div className="flex gap-2">
-                        <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="icon">
+                        <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="icon" title="Add Image">
                             <ImagePlus/>
                         </Button>
                         <input
@@ -220,6 +227,11 @@ export default function JournalPage() {
                             className="hidden"
                             accept="image/*"
                         />
+                         {selectedEntry.imageUrl && (
+                            <Button onClick={handleRemoveImage} variant="outline" size="icon" title="Remove Image">
+                                <XCircle />
+                            </Button>
+                        )}
                         <Button onClick={handleSaveEntry}><Save className="mr-2"/>Save</Button>
                         {!selectedEntry.id.startsWith('new-') && (
                             <AlertDialog>
