@@ -24,7 +24,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { JournalPrompt } from "@/components/journal-prompt";
 
 // Mock Data
 const mockEntries: JournalEntry[] = [
@@ -197,65 +196,60 @@ export default function JournalPage() {
       <div className="flex-1 pl-6">
         {selectedEntry ? (
           <div className="flex flex-col h-full gap-4">
-            <div className="flex-1 grid grid-cols-3 gap-6">
-                <Card className="col-span-3 lg:col-span-2 flex flex-col gap-4 bg-card/50 backdrop-blur-sm p-4 h-full">
-                   <div className="flex gap-2 items-center">
-                        <Input
-                            placeholder="Title"
-                            className="text-2xl font-bold h-12 flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
-                            value={selectedEntry.title}
-                            onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
-                        />
-                        <div className="flex gap-2">
-                           <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="icon">
-                                <ImagePlus/>
-                           </Button>
-                           <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageUpload}
-                                className="hidden"
-                                accept="image/*"
-                            />
-                            <Button onClick={handleSaveEntry}><Save className="mr-2"/>Save</Button>
-                            {!selectedEntry.id.startsWith('new-') && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon"><Trash2/></Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently delete this journal entry.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDeleteEntry}>Delete</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
-                        </div>
-                   </div>
-                   <Separator/>
-                   <Textarea
-                        placeholder="Start writing..."
-                        className="flex-1 text-base resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        value={selectedEntry.content}
-                        onChange={(e) => setSelectedEntry({ ...selectedEntry, content: e.target.value })}
+            <Card className="flex-1 flex flex-col gap-4 bg-card/50 backdrop-blur-sm p-4 h-full">
+                {selectedEntry.imageUrl && (
+                    <div className="aspect-video relative w-full rounded-lg overflow-hidden border mb-4">
+                        <Image src={selectedEntry.imageUrl} alt={selectedEntry.title} layout="fill" objectFit="cover" data-ai-hint="journal memory" />
+                    </div>
+                )}
+                <div className="flex gap-2 items-center">
+                    <Input
+                        placeholder="Title"
+                        className="text-2xl font-bold h-12 flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+                        value={selectedEntry.title}
+                        onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
                     />
-                </Card>
-                <div className="col-span-3 lg:col-span-1 flex flex-col gap-6">
-                     {selectedEntry.imageUrl && (
-                        <div className="aspect-video relative w-full rounded-lg overflow-hidden border">
-                            <Image src={selectedEntry.imageUrl} alt={selectedEntry.title} layout="fill" objectFit="cover" data-ai-hint="journal memory" />
-                        </div>
-                     )}
-                     <JournalPrompt />
+                    <div className="flex gap-2">
+                        <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="icon">
+                            <ImagePlus/>
+                        </Button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            accept="image/*"
+                        />
+                        <Button onClick={handleSaveEntry}><Save className="mr-2"/>Save</Button>
+                        {!selectedEntry.id.startsWith('new-') && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="icon"><Trash2/></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will permanently delete this journal entry.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteEntry}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
                 </div>
-            </div>
+                <Separator/>
+                <Textarea
+                    placeholder="Start writing..."
+                    className="flex-1 text-base resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    value={selectedEntry.content}
+                    onChange={(e) => setSelectedEntry({ ...selectedEntry, content: e.target.value })}
+                />
+            </Card>
              <div className="text-center">
                 <Button asChild variant="ghost">
                     <Link href="/"><Home className="mr-2"/>Back to Home</Link>
