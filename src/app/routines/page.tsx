@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -170,7 +171,6 @@ export default function RoutinesPage() {
   const completedTodayRoutines = routines.filter(r => completionStatus[r.id] === today);
   const totalPoints = completedTodayRoutines.reduce((sum, r) => sum + r.rewardPoints, 0);
 
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
       <div className="w-full max-w-5xl space-y-8">
@@ -240,13 +240,13 @@ export default function RoutinesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => openEditForm(routine)}>
-                                    <Edit className="mr-2 h-4 w-4" />
+                                    <Edit className="mr-2 h-4 w-4"/>
                                     <span>Edit</span>
                                 </DropdownMenuItem>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <button className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full text-destructive">
-                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            <Trash2 className="mr-2 h-4 w-4"/>
                                             <span>Delete</span>
                                         </button>
                                     </AlertDialogTrigger>
@@ -254,8 +254,7 @@ export default function RoutinesPage() {
                                         <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your
-                                            routine.
+                                            This action cannot be undone. This will permanently delete this routine.
                                         </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -267,42 +266,44 @@ export default function RoutinesPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </CardHeader>
-                    <CardContent className="flex-grow space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground capitalize">
-                           {routine.frequency} at {routine.timeOfDay}
+                    <CardContent className="flex-grow space-y-4">
+                        <div className="text-sm text-muted-foreground space-y-2">
+                           <div className="flex items-center gap-2">
+                             <Badge variant="outline" className="capitalize">{routine.frequency}</Badge>
+                             {routine.timeOfDay && <Badge variant="secondary">{routine.timeOfDay}</Badge>}
+                           </div>
+                            {routine.frequency === 'weekly' && routine.daysOfWeek && routine.daysOfWeek.length > 0 && (
+                                <div className="flex gap-1.5">
+                                    {weekDays.map((day, index) => (
+                                        <span key={index} className={`w-6 h-6 flex items-center justify-center rounded-full text-xs ${routine.daysOfWeek?.includes(index) ? 'bg-primary text-primary-foreground' : 'bg-muted/50'}`}>
+                                            {day.label}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                        {routine.daysOfWeek && routine.daysOfWeek.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {routine.daysOfWeek.map(day => (
-                                    <Badge key={day} variant="secondary" className="text-xs">{getDayName(day)}</Badge>
-                                ))}
-                            </div>
-                        )}
+                         <p className="text-accent font-bold text-lg">{routine.rewardPoints}pts</p>
                     </CardContent>
-                    <CardFooter className="flex justify-between items-center">
-                         <div className="flex items-center gap-1 text-accent font-bold">
-                            <Zap className="w-4 h-4"/>
-                            <span>{routine.rewardPoints}pts</span>
-                        </div>
-                        <Button 
-                          variant={isCompletedToday(routine.id) ? "secondary" : "outline"}
-                          size="sm"
-                          onClick={() => handleMarkAsDone(routine)}
-                          disabled={isCompletedToday(routine.id)}
+                    <CardFooter>
+                         <Button 
+                            onClick={() => handleMarkAsDone(routine)} 
+                            disabled={isCompletedToday(routine.id)}
+                            className="w-full"
                         >
-                            {isCompletedToday(routine.id) ? 'Completed' : 'Mark as Done'}
+                            <Zap className="mr-2"/>
+                            {isCompletedToday(routine.id) ? 'Completed Today!' : 'Mark as Done'}
                         </Button>
                     </CardFooter>
                 </Card>
             ))}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center">
             <Button asChild variant="ghost">
-                <Link href="/"><Home className="mr-2"/> Back to Home</Link>
+                <Link href="/"><Home className="mr-2"/>Back to Home</Link>
             </Button>
         </div>
       </div>
     </div>
-    
-    
+  );
+}
