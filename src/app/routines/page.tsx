@@ -73,7 +73,7 @@ export default function RoutinesPage() {
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [completionStatus, setCompletionStatus] = useState<CompletionStatus>({});
-  const [totalPoints, setTotalPoints] = useState<number>(0);
+  
   const { toast } = useToast();
 
   // Load data from localStorage on mount
@@ -81,10 +81,12 @@ export default function RoutinesPage() {
     try {
       const savedRoutines = localStorage.getItem('bloom-routines');
       const savedCompletionStatus = localStorage.getItem('bloom-completionStatus');
-      const savedTotalPoints = localStorage.getItem('bloom-totalPoints');
 
       if (savedRoutines) {
-        setRoutines(JSON.parse(savedRoutines));
+        setRoutines(JSON.parse(savedRoutines, (key, value) => {
+             if (key === 'createdAt' || key === 'updatedAt') return new Date(value);
+             return value;
+        }));
       } else {
         setRoutines(mockRoutines); // Initialize with mock data if nothing is saved
       }
@@ -93,9 +95,6 @@ export default function RoutinesPage() {
         setCompletionStatus(JSON.parse(savedCompletionStatus));
       }
 
-      if (savedTotalPoints) {
-        setTotalPoints(JSON.parse(savedTotalPoints));
-      }
     } catch (error) {
         console.error("Failed to load from localStorage", error);
         setRoutines(mockRoutines); // Fallback to mock data on error
@@ -107,11 +106,10 @@ export default function RoutinesPage() {
     try {
         if(routines.length > 0) localStorage.setItem('bloom-routines', JSON.stringify(routines));
         localStorage.setItem('bloom-completionStatus', JSON.stringify(completionStatus));
-        localStorage.setItem('bloom-totalPoints', JSON.stringify(totalPoints));
     } catch (error) {
         console.error("Failed to save to localStorage", error);
     }
-  }, [routines, completionStatus, totalPoints]);
+  }, [routines, completionStatus]);
 
   const openCreateForm = () => {
     setEditingRoutine(null);
@@ -147,16 +145,19 @@ export default function RoutinesPage() {
 
   const handleDeleteRoutine = (routineId: string) => {
     setRoutines(routines.filter(r => r.id !== routineId));
+    // Also remove from completion status
+    const newCompletionStatus = { ...completionStatus };
+    delete newCompletionStatus[routineId];
+    setCompletionStatus(newCompletionStatus);
     toast({ title: "Routine Deleted", variant: 'destructive' });
   }
 
   const handleMarkAsDone = (routine: Routine) => {
     const today = new Date().toISOString().split('T')[0];
     setCompletionStatus(prev => ({ ...prev, [routine.id]: today }));
-    setTotalPoints(prev => prev + routine.rewardPoints);
     toast({
       title: "Routine Complete!",
-      description: `Great job! You've earned ${routine.rewardPoints} points.`,
+      description: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
     });
   }
 
@@ -164,6 +165,11 @@ export default function RoutinesPage() {
     const today = new Date().toISOString().split('T')[0];
     return completionStatus[routineId] === today;
   }
+  
+  const today = new Date().toISOString().split('T')[0];
+  const completedTodayRoutines = routines.filter(r => completionStatus[r.id] === today);
+  const totalPoints = completedTodayRoutines.reduce((sum, r) => sum + r.rewardPoints, 0);
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
@@ -195,16 +201,28 @@ export default function RoutinesPage() {
                     </DialogContent>
                 </Dialog>
             </div>
-            <Card className="bg-card/50 backdrop-blur-sm border-white/10 text-center">
+            <Card className="bg-card/50 backdrop-blur-sm border-white/10">
                 <CardHeader>
                     <CardTitle className="flex items-center justify-center gap-2 text-primary">
                         <Star />
-                        Total Points
+                        Today's Points
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-center">
                     <p className="text-4xl font-bold text-accent">{totalPoints}</p>
-                    <CardDescription>Points earned from completed routines.</CardDescription>
+                    <CardDescription>Total points earned today.</CardDescription>
+                     <div className="mt-4 space-y-2 text-sm">
+                        {completedTodayRoutines.length > 0 ? (
+                            completedTodayRoutines.map(r => (
+                                <div key={r.id} className="flex justify-between items-center bg-background/50 p-2 rounded-md">
+                                    <span className="text-foreground/80">{r.name}</span>
+                                    <span className="font-bold text-accent">+{r.rewardPoints}pts</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-muted-foreground">No routines completed yet today.</p>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -286,5 +304,5 @@ export default function RoutinesPage() {
         </div>
       </div>
     </div>
-  );
-}
+    
+    
