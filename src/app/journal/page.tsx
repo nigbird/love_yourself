@@ -203,14 +203,14 @@ export default function JournalPage() {
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'w-1/3 min-w-[300px]' : 'w-16'} flex flex-col`}>
         <div className="flex flex-col flex-1 bg-transparent">
           <div className="flex flex-row items-center justify-between p-2 mb-4">
-             {isSidebarOpen && <h2 className="text-primary text-2xl font-headline flex items-center gap-2"><BookHeart/> My Diary</h2>}
+             {isSidebarOpen && <h2 className="text-primary text-2xl font-headline flex items-center gap-2"><BookHeart/> My Journal</h2>}
             <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               {isSidebarOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
             </Button>
           </div>
           
           <Button onClick={handleNewEntry} className="mb-4 mx-2">
-              New Entry
+              Another....
           </Button>
           
           <ScrollArea className="flex-1">
