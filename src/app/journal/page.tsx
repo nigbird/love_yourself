@@ -6,13 +6,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { PanelLeftClose, PanelLeftOpen, BookHeart, Trash2, Home, ImagePlus, Save, XCircle } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, BookHeart, Trash2, Home, ImagePlus, Save, XCircle, Wand2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import type { JournalEntry } from "@/domain/entities";
 import { useToast } from "@/hooks/use-toast";
+import { generateImageFromText } from "@/ai/flows/image-generator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Mock Data
 const mockEntries: JournalEntry[] = [
@@ -35,6 +37,7 @@ const mockEntries: JournalEntry[] = [
     imageUrl: "https://placehold.co/600x400.png",
     createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
     updatedAt: new Date(new Date().setDate(new Date().getDate() - 2)),
+    mood: "😊",
   },
   {
     id: "2",
@@ -43,14 +46,17 @@ const mockEntries: JournalEntry[] = [
     content: "Finished reading 'The Midnight Library' and it left me with a lot to think about. The idea that we can live so many different lives is both daunting and comforting. It makes me want to be more intentional with my choices.",
     createdAt: new Date(new Date().setDate(new Date().getDate() - 1)),
     updatedAt: new Date(new Date().setDate(new Date().getDate() - 1)),
+    mood: "🤔",
   },
 ];
 
+const moods = ["😊", "😢", "😠", "😍", "🤔", "😴"];
 
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,7 +70,6 @@ export default function JournalPage() {
         });
         setEntries(parsedEntries);
         if (parsedEntries.length > 0) {
-          // Select the most recent entry by default
           const sortedEntries = [...parsedEntries].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
           setSelectedEntry(sortedEntries[0]);
         } else {
@@ -72,12 +77,12 @@ export default function JournalPage() {
         }
       } else {
         setEntries(mockEntries);
-        setSelectedEntry(mockEntries[1]);
+        setSelectedEntry(mockEntries[0]);
       }
     } catch (error) {
       console.error("Failed to load journal entries from localStorage", error);
       setEntries(mockEntries);
-      setSelectedEntry(mockEntries[1]);
+      setSelectedEntry(mockEntries[0]);
     }
   }, []);
 
@@ -101,7 +106,9 @@ export default function JournalPage() {
       content: "",
       createdAt: new Date(),
       updatedAt: new Date(),
+      mood: "😊",
     };
+    setEntries(prev => [newEntry, ...prev]);
     setSelectedEntry(newEntry);
   };
 
@@ -116,24 +123,28 @@ export default function JournalPage() {
     }
 
     const isNew = selectedEntry.id.startsWith('new-');
-    const entryToSave = { ...selectedEntry, updatedAt: new Date() };
+    let entryToSave = { ...selectedEntry, updatedAt: new Date() };
 
     if (isNew) {
-      entryToSave.id = new Date().toISOString(); // Assign a permanent ID
-      setEntries([entryToSave, ...entries]);
-      toast({ title: "Entry Saved!", description: "Your new journal entry has been saved." });
-    } else {
-      setEntries(entries.map(e => e.id === selectedEntry.id ? entryToSave : e));
-      toast({ title: "Entry Updated!", description: "Your changes have been saved." });
+      entryToSave.id = new Date().toISOString(); 
     }
-    setSelectedEntry(entryToSave); // Ensure the selected entry has the permanent ID
+    
+    setEntries(entries.map(e => e.id === selectedEntry.id || (isNew && e.id === `new-${selectedEntry.id.split('-')[1]}`) ? entryToSave : e));
+    setSelectedEntry(entryToSave);
+    
+    toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
   };
 
   const handleDeleteEntry = () => {
       if (!selectedEntry || selectedEntry.id.startsWith('new-')) return;
       setEntries(entries.filter(e => e.id !== selectedEntry.id));
-      setSelectedEntry(null);
-      handleNewEntry();
+      const remainingEntries = entries.filter(e => e.id !== selectedEntry.id);
+      if (remainingEntries.length > 0) {
+        const sorted = [...remainingEntries].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setSelectedEntry(sorted[0]);
+      } else {
+        setSelectedEntry(null);
+      }
       toast({ title: "Entry Deleted", variant: 'destructive' });
   };
   
@@ -155,84 +166,115 @@ export default function JournalPage() {
     }
   };
 
+  const handleUpdateSelectedEntry = (field: keyof JournalEntry, value: any) => {
+    if (selectedEntry) {
+      setSelectedEntry({ ...selectedEntry, [field]: value });
+    }
+  }
+
+  const handleGenerateImage = async () => {
+    if (!selectedEntry || !selectedEntry.content) {
+      toast({ title: "Nothing to illustrate!", description: "Write something in your journal first.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingImage(true);
+    try {
+      const result = await generateImageFromText({ text: selectedEntry.content });
+      if (result.imageUrl) {
+        setSelectedEntry({ ...selectedEntry, imageUrl: result.imageUrl });
+        toast({ title: "Illustration created!", description: "An image has been generated based on your entry." });
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast({ title: "Generation Failed", description: "Couldn't create an image right now. Please try again.", variant: "destructive" });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+
   const sortedEntries = [...entries].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] w-full">
+    <div className="flex h-[calc(100vh-8rem)] w-full gap-6">
       {/* Sidebar */}
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'w-1/3 min-w-[300px]' : 'w-16'} flex flex-col`}>
-        <Card className="flex-1 flex flex-col bg-card/50 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between p-4">
-             {isSidebarOpen && <CardTitle className="text-primary text-xl flex items-center gap-2"><BookHeart/> Journal Entries</CardTitle>}
+        <div className="flex flex-col flex-1 bg-transparent">
+          <div className="flex flex-row items-center justify-between p-2 mb-4">
+             {isSidebarOpen && <h2 className="text-primary text-2xl font-headline flex items-center gap-2"><BookHeart/> My Diary</h2>}
             <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               {isSidebarOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
             </Button>
-          </CardHeader>
-          <Separator />
+          </div>
+          
+          <Button onClick={handleNewEntry} className="mb-4 mx-2">
+              New Entry
+          </Button>
+          
           <ScrollArea className="flex-1">
-             <CardContent className="p-2">
+             <div className="p-2 space-y-2">
                 {sortedEntries.map(entry => (
-                  <Button
+                  <button
                     key={entry.id}
-                    variant={selectedEntry?.id === entry.id ? 'secondary' : 'ghost'}
-                    className={`w-full justify-start mb-1 h-auto py-2 px-3 ${!isSidebarOpen && 'justify-center'}`}
+                    className={`w-full text-left p-3 rounded-lg transition-colors relative ${selectedEntry?.id === entry.id ? 'bg-primary/20 border-primary/50' : 'bg-card/50 hover:bg-card/80'} border`}
                     onClick={() => handleSelectEntry(entry)}
                   >
                      {isSidebarOpen ? (
-                        <div className="flex flex-col items-start text-left">
-                            <span className="font-semibold">{entry.title}</span>
-                            <span className="text-xs text-muted-foreground">{entry.createdAt.toLocaleDateString()}</span>
-                        </div>
+                        <>
+                          <div className="font-bold text-primary truncate">{entry.title}</div>
+                          <p className="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                          <p className="text-xs text-muted-foreground truncate opacity-70 mt-1">{entry.content}</p>
+                          <div className="absolute top-2 right-2 text-2xl">{entry.mood}</div>
+                        </>
                      ) : (
-                        <BookHeart className="h-5 w-5"/>
+                        <div className="flex flex-col items-center">
+                          <span className="text-2xl">{entry.mood}</span>
+                          <BookHeart className="h-5 w-5 mt-1 text-primary"/>
+                        </div>
                      )}
-                  </Button>
+                  </button>
                 ))}
-             </CardContent>
+             </div>
           </ScrollArea>
-           <Separator/>
-            <div className="p-2">
-                <Button onClick={handleNewEntry} className="w-full">
-                    New Entry
+           <div className="p-2 mt-auto">
+                <Button asChild variant="ghost" className="w-full">
+                    <Link href="/"><Home className="mr-2"/>Back to Home</Link>
                 </Button>
             </div>
-        </Card>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 pl-6">
+      <div className="flex-1 flex flex-col">
         {selectedEntry ? (
-          <div className="flex flex-col h-full gap-4">
-            <Card className="flex-1 flex flex-col gap-4 bg-card/50 backdrop-blur-sm p-4 h-full">
-                {selectedEntry.imageUrl && (
-                    <div className="aspect-video relative w-full rounded-lg overflow-hidden border mb-4">
-                        <Image src={selectedEntry.imageUrl} alt={selectedEntry.title} layout="fill" objectFit="cover" data-ai-hint="journal memory" />
-                    </div>
-                )}
-                <div className="flex gap-2 items-center">
+          <Card className="flex-1 flex flex-col bg-[hsl(var(--paper))] text-paper-foreground shadow-2xl rounded-2xl">
+            <CardContent className="p-8 flex-1 flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <div>
                     <Input
                         placeholder="Title"
-                        className="text-2xl font-bold h-12 flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+                        className="text-4xl font-bold h-auto bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 font-headline"
                         value={selectedEntry.title}
-                        onChange={(e) => setSelectedEntry({ ...selectedEntry, title: e.target.value })}
+                        onChange={(e) => handleUpdateSelectedEntry('title', e.target.value)}
                     />
-                    <div className="flex gap-2">
-                        <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="icon" title="Add Image">
-                            <ImagePlus/>
-                        </Button>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            accept="image/*"
-                        />
-                         {selectedEntry.imageUrl && (
-                            <Button onClick={handleRemoveImage} variant="outline" size="icon" title="Remove Image">
-                                <XCircle />
-                            </Button>
-                        )}
-                        <Button onClick={handleSaveEntry}><Save className="mr-2"/>Save</Button>
+                    <p className="text-sm text-paper-foreground/60">{new Date(selectedEntry.createdAt).toLocaleString()}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-3xl w-12 h-12">{selectedEntry.mood}</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2">
+                          <div className="flex gap-2">
+                            {moods.map(mood => (
+                              <Button key={mood} variant="ghost" size="icon" className="text-2xl" onClick={() => handleUpdateSelectedEntry('mood', mood)}>{mood}</Button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+
+                      <Button onClick={handleSaveEntry} size="sm"><Save className="mr-2"/>Save</Button>
                         {!selectedEntry.id.startsWith('new-') && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -240,38 +282,63 @@ export default function JournalPage() {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently delete this journal entry.
-                                    </AlertDialogDescription>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This will permanently delete this journal entry.
+                                      </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteEntry}>Delete</AlertDialogAction>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={handleDeleteEntry}>Delete</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
                         )}
-                    </div>
+                  </div>
                 </div>
-                <Separator/>
-                <Textarea
-                    placeholder="Start writing..."
-                    className="flex-1 text-base resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                    value={selectedEntry.content}
-                    onChange={(e) => setSelectedEntry({ ...selectedEntry, content: e.target.value })}
-                />
-            </Card>
-             <div className="text-center">
-                <Button asChild variant="ghost">
-                    <Link href="/"><Home className="mr-2"/>Back to Home</Link>
-                </Button>
-            </div>
-          </div>
+                <Separator className="bg-paper-foreground/20"/>
+                
+                <div className="flex-1 flex flex-col gap-4">
+                   <div className="flex items-center gap-2">
+                      <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="border-paper-foreground/20">
+                          <ImagePlus className="mr-2"/> {selectedEntry.imageUrl ? "Change Image" : "Add Image"}
+                      </Button>
+                      <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+
+                      <Button onClick={handleGenerateImage} variant="outline" size="sm" className="border-paper-foreground/20" disabled={isGeneratingImage}>
+                        {isGeneratingImage ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
+                        Illustrate my thoughts
+                      </Button>
+
+                      {selectedEntry.imageUrl && (
+                          <Button onClick={handleRemoveImage} variant="destructive" size="icon" title="Remove Image">
+                              <XCircle />
+                          </Button>
+                      )}
+                    </div>
+                    {selectedEntry.imageUrl && (
+                        <div className="aspect-video relative w-full rounded-lg overflow-hidden border border-paper-foreground/10">
+                            <Image src={selectedEntry.imageUrl} alt={selectedEntry.title} layout="fill" objectFit="cover" data-ai-hint="journal memory" />
+                        </div>
+                    )}
+
+                    <Textarea
+                        placeholder="Start writing..."
+                        className="flex-1 text-lg resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-body leading-relaxed"
+                        value={selectedEntry.content}
+                        onChange={(e) => handleUpdateSelectedEntry('content', e.target.value)}
+                    />
+                </div>
+            </CardContent>
+          </Card>
         ) : (
           <div className="flex items-center justify-center h-full">
             <Card className="p-8 text-center bg-card/50">
-              <CardTitle>Select an entry or create a new one</CardTitle>
+              <CardContent>
+                <h2 className="text-2xl font-headline text-primary">Your diary is waiting.</h2>
+                <p className="text-muted-foreground mt-2">Select an entry or create a new one to begin.</p>
+                <Button onClick={handleNewEntry} className="mt-6">Create First Entry</Button>
+              </CardContent>
             </Card>
           </div>
         )}

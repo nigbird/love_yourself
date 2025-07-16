@@ -4,6 +4,7 @@ export interface JournalEntry {
   title: string;
   content: string;
   imageUrl?: string;
+  mood?: string;
   createdAt: Date;
   updatedAt: Date;
 }
