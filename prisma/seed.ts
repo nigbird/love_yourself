@@ -3,28 +3,30 @@
 // set up a schema.prisma file, and a database to use this.
 // The current application uses localStorage, so this file is for future extension.
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, RoutineFrequency } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log(`Start seeding ...`)
 
-  // Create a sample user
-  const user = await prisma.user.create({
-    data: {
+  // Create a sample user if they don't exist
+  const user = await prisma.user.upsert({
+    where: { email: 'user@example.com' },
+    update: {},
+    create: {
       email: 'user@example.com',
       name: 'Bloom User',
       rewardPoints: 0,
     },
   })
-  console.log(`Created user with id: ${user.id}`)
+  console.log(`Upserted user with id: ${user.id}`)
 
   // Seed Routines
   const routines = [
     {
         name: 'Hair Wash Day',
-        frequency: 'weekly',
+        frequency: RoutineFrequency.weekly,
         daysOfWeek: [0, 3], // Sunday, Wednesday
         timeOfDay: '20:00',
         rewardPoints: 20,
@@ -33,7 +35,7 @@ async function main() {
     },
     {
         name: 'Meal Prep',
-        frequency: 'weekly',
+        frequency: RoutineFrequency.weekly,
         daysOfWeek: [0], // Sunday
         timeOfDay: '16:00',
         rewardPoints: 50,
@@ -42,7 +44,7 @@ async function main() {
     },
     {
         name: 'Daily Gratitude',
-        frequency: 'daily',
+        frequency: RoutineFrequency.daily,
         timeOfDay: '08:00',
         rewardPoints: 10,
         remindersEnabled: true,
@@ -51,10 +53,13 @@ async function main() {
   ];
 
   for (const routineData of routines) {
-      const routine = await prisma.routine.create({
-          data: routineData,
+      // Using upsert for routines as well to avoid duplicates
+      const routine = await prisma.routine.upsert({
+          where: { name_userId: { name: routineData.name, userId: user.id } },
+          update: routineData,
+          create: routineData,
       });
-      console.log(`Created routine with id: ${routine.id}`);
+      console.log(`Upserted routine with id: ${routine.id}`);
   }
 
   // Seed Goals
@@ -86,10 +91,12 @@ async function main() {
   ];
 
   for (const goalData of goals) {
-      const goal = await prisma.goal.create({
-          data: goalData,
+      const goal = await prisma.goal.upsert({
+          where: { name_userId: { name: goalData.name, userId: user.id } },
+          update: goalData,
+          create: goalData,
       });
-      console.log(`Created goal with id: ${goal.id}`);
+      console.log(`Upserted goal with id: ${goal.id}`);
   }
 
 
@@ -111,10 +118,12 @@ async function main() {
   ];
 
   for (const entryData of journalEntries) {
-      const entry = await prisma.journalEntry.create({
-          data: entryData
+      const entry = await prisma.journalEntry.upsert({
+          where: { title_userId: { title: entryData.title, userId: user.id } },
+          update: entryData,
+          create: entryData
       });
-      console.log(`Created journal entry with id: ${entry.id}`);
+      console.log(`Upserted journal entry with id: ${entry.id}`);
   }
 
 
@@ -130,3 +139,4 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
+
