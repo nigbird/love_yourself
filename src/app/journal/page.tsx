@@ -60,6 +60,7 @@ export default function JournalPage() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     try {
@@ -94,6 +95,14 @@ export default function JournalPage() {
         console.error("Failed to save journal entries to localStorage", error);
     }
   }, [entries]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [selectedEntry?.content])
+
 
   const handleSelectEntry = (entry: JournalEntry) => {
     setSelectedEntry(entry);
@@ -198,9 +207,9 @@ export default function JournalPage() {
   const sortedEntries = [...entries].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] w-full gap-6">
+    <div className="flex w-full gap-6 items-start">
       {/* Sidebar */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'w-1/3 min-w-[300px]' : 'w-16'} flex flex-col`}>
+      <div className={cn("sticky top-24 transition-all duration-300 flex flex-col", isSidebarOpen ? 'w-1/3 min-w-[300px]' : 'w-16')}>
         <div className="flex flex-col flex-1 bg-transparent">
           <div className="flex flex-row items-center justify-between p-2 mb-4">
              {isSidebarOpen && <h2 className="text-primary text-2xl font-headline flex items-center gap-2"><BookHeart/> My Journal</h2>}
@@ -213,7 +222,7 @@ export default function JournalPage() {
               Another....
           </Button>
           
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 h-[calc(100vh-20rem)]">
              <div className="p-2 space-y-2">
                 {sortedEntries.map(entry => (
                   <button
@@ -249,7 +258,7 @@ export default function JournalPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col group/content">
         {selectedEntry ? (
-          <Card className="flex-1 flex flex-col bg-[hsl(var(--paper))] text-paper-foreground shadow-2xl rounded-2xl">
+          <Card className="flex flex-col bg-[hsl(var(--paper))] text-paper-foreground shadow-2xl rounded-2xl">
             <CardContent className="p-8 flex-1 flex flex-col gap-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -300,7 +309,7 @@ export default function JournalPage() {
                 </div>
                 <Separator className="bg-paper-foreground/20"/>
                 
-                <div className="flex-1 flex flex-col gap-4">
+                <div className="flex-grow flex flex-col gap-4">
                    <div className="flex items-center gap-2">
                       <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="bg-accent/20 border-accent/30 text-accent-foreground hover:bg-accent/30">
                           <ImagePlus className="mr-2"/> {selectedEntry.imageUrl ? "Change Image" : "Add Image"}
@@ -325,8 +334,9 @@ export default function JournalPage() {
                     )}
 
                     <Textarea
+                        ref={textareaRef}
                         placeholder="Start writing..."
-                        className="flex-1 text-lg resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-body leading-relaxed"
+                        className="min-h-[40vh] text-lg resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-body leading-relaxed overflow-hidden"
                         value={selectedEntry.content}
                         onChange={(e) => handleUpdateSelectedEntry('content', e.target.value)}
                     />
