@@ -17,7 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
-import CreateWishForm from '@/components/wish/create-wish-form';
+import { CreateWishForm } from '@/components/wish/create-wish-form';
 import type { Wish } from '@/domain/entities';
 
 // Mock data for initial display

@@ -78,3 +78,5 @@ export function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormPr
     </form>
   );
 }
+
+export default CreateWishForm;
