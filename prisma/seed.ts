@@ -53,13 +53,21 @@ async function main() {
   ];
 
   for (const routineData of routines) {
-      // Using upsert for routines as well to avoid duplicates
-      const routine = await prisma.routine.upsert({
-          where: { name_userId: { name: routineData.name, userId: user.id } },
-          update: routineData,
-          create: routineData,
+      const existingRoutine = await prisma.routine.findFirst({
+        where: {
+            name: routineData.name,
+            userId: user.id,
+        }
       });
-      console.log(`Upserted routine with id: ${routine.id}`);
+
+      if (!existingRoutine) {
+          const routine = await prisma.routine.create({
+              data: routineData,
+          });
+          console.log(`Created routine with id: ${routine.id}`);
+      } else {
+          console.log(`Routine "${routineData.name}" already exists. Skipping.`);
+      }
   }
 
   // Seed Goals
@@ -91,12 +99,21 @@ async function main() {
   ];
 
   for (const goalData of goals) {
-      const goal = await prisma.goal.upsert({
-          where: { name_userId: { name: goalData.name, userId: user.id } },
-          update: goalData,
-          create: goalData,
+      const existingGoal = await prisma.goal.findFirst({
+        where: {
+            name: goalData.name,
+            userId: user.id,
+        }
       });
-      console.log(`Upserted goal with id: ${goal.id}`);
+
+      if(!existingGoal) {
+          const goal = await prisma.goal.create({
+              data: goalData,
+          });
+          console.log(`Created goal with id: ${goal.id}`);
+      } else {
+          console.log(`Goal "${goalData.name}" already exists. Skipping.`);
+      }
   }
 
 
@@ -118,12 +135,20 @@ async function main() {
   ];
 
   for (const entryData of journalEntries) {
-      const entry = await prisma.journalEntry.upsert({
-          where: { title_userId: { title: entryData.title, userId: user.id } },
-          update: entryData,
-          create: entryData
+      const existingEntry = await prisma.journalEntry.findFirst({
+        where: {
+            title: entryData.title,
+            userId: user.id,
+        }
       });
-      console.log(`Upserted journal entry with id: ${entry.id}`);
+      if (!existingEntry) {
+        const entry = await prisma.journalEntry.create({
+            data: entryData
+        });
+        console.log(`Created journal entry with id: ${entry.id}`);
+      } else {
+        console.log(`Journal entry "${entryData.title}" already exists. Skipping.`);
+      }
   }
 
 
