@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -34,7 +35,7 @@ const generateImageFlow = ai.defineFlow(
   async (input) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate an artistic, painterly, and emotional image that captures the essence of the following journal entry. Avoid using text or words in the image. Focus on mood, color, and symbolism. Prompt: ${input.text}`,
+      prompt: input.text,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
