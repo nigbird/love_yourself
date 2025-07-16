@@ -130,7 +130,8 @@ export default function JournalPage() {
       entryToSave.id = new Date().toISOString(); 
     }
     
-    setEntries(entries.map(e => e.id === selectedEntry.id || (isNew && e.id === `new-${selectedEntry.id.split('-')[1]}`) ? entryToSave : e));
+    const newEntries = entries.map(e => e.id === selectedEntry.id || (isNew && e.id === `new-${selectedEntry.id.split('-')[1]}`) ? entryToSave : e);
+    setEntries(newEntries);
     setSelectedEntry(entryToSave);
     
     toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
@@ -300,13 +301,13 @@ export default function JournalPage() {
                 <Separator className="bg-paper-foreground/20"/>
                 
                 <div className="flex-1 flex flex-col gap-4">
-                   <div className="flex items-center gap-2 transition-opacity duration-300 group-hover/content:opacity-100">
-                      <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="border-paper-foreground/20">
+                   <div className="flex items-center gap-2">
+                      <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="border-paper-foreground/20 hover:bg-paper-foreground/10 hover:text-paper-foreground">
                           <ImagePlus className="mr-2"/> {selectedEntry.imageUrl ? "Change Image" : "Add Image"}
                       </Button>
                       <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
 
-                      <Button onClick={handleGenerateImage} variant="outline" size="sm" className="border-paper-foreground/20" disabled={isGeneratingImage}>
+                      <Button onClick={handleGenerateImage} variant="outline" size="sm" className="border-paper-foreground/20 hover:bg-paper-foreground/10 hover:text-paper-foreground" disabled={isGeneratingImage}>
                         {isGeneratingImage ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                         Illustrate my thoughts
                       </Button>
