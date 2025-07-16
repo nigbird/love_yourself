@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 // Mock Data
 const mockEntries: JournalEntry[] = [
@@ -245,7 +246,7 @@ export default function JournalPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col group/content">
         {selectedEntry ? (
           <Card className="flex-1 flex flex-col bg-[hsl(var(--paper))] text-paper-foreground shadow-2xl rounded-2xl">
             <CardContent className="p-8 flex-1 flex flex-col gap-4">
@@ -299,7 +300,7 @@ export default function JournalPage() {
                 <Separator className="bg-paper-foreground/20"/>
                 
                 <div className="flex-1 flex flex-col gap-4">
-                   <div className="flex items-center gap-2">
+                   <div className="flex items-center gap-2 transition-opacity duration-300 group-hover/content:opacity-100">
                       <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="border-paper-foreground/20">
                           <ImagePlus className="mr-2"/> {selectedEntry.imageUrl ? "Change Image" : "Add Image"}
                       </Button>
