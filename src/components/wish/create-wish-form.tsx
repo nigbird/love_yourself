@@ -24,7 +24,7 @@ interface CreateWishFormProps {
   wishToEdit?: Wish;
 }
 
-export function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
+function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
