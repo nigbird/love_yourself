@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ImagePlus, Save, Trash2, Wand2, Loader2, XCircle, ArrowLeft } from "lucide-react";
+import { ImagePlus, Save, Trash2, Wand2, Loader2, XCircle, ArrowLeft, SmilePlus } from "lucide-react";
 import Image from "next/image";
 import type { JournalEntry } from "@/domain/entities";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +28,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getJournalEntry, saveJournalEntry, deleteJournalEntry } from '../actions';
 
-const moods = ["😊", "😢", "😠", "😍", "🤔", "😴"];
+const moods = ["😊", "😢", "😠", "😍", "🤔", "😴", "None"];
 
 export default function JournalEntryPage() {
   const [currentEntry, setCurrentEntry] = useState<JournalEntry | null>(null);
@@ -73,7 +73,11 @@ export default function JournalEntryPage() {
 
   const handleUpdateEntry = (field: keyof JournalEntry, value: any) => {
     if (currentEntry) {
-      setCurrentEntry({ ...currentEntry, [field]: value });
+      if (field === 'mood' && value === 'None') {
+        setCurrentEntry({ ...currentEntry, mood: undefined });
+      } else {
+        setCurrentEntry({ ...currentEntry, [field]: value });
+      }
     }
   }
 
@@ -134,6 +138,14 @@ export default function JournalEntryPage() {
   };
 
   const handleGenerateImage = async () => {
+    if (!process.env.NEXT_PUBLIC_GOOGLE_API_KEY && process.env.NODE_ENV !== 'development') {
+        toast({
+            title: "Feature Not Configured",
+            description: "The AI image generation requires an API key.",
+            variant: "destructive",
+        });
+        return;
+    }
     if (!currentEntry || !currentEntry.content) {
       toast({ title: "Nothing to illustrate!", description: "Write something in your journal first.", variant: "destructive" });
       return;
@@ -147,7 +159,7 @@ export default function JournalEntryPage() {
       }
     } catch (error) {
       console.error("Error generating image:", error);
-      toast({ title: "Generation Failed", description: "Couldn't create an image right now. Please try again.", variant: "destructive" });
+      toast({ title: "Generation Failed", description: "Couldn't create an image right now. This can happen if the API key is missing or invalid.", variant: "destructive" });
     } finally {
       setIsGeneratingImage(false);
     }
@@ -189,12 +201,14 @@ export default function JournalEntryPage() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-3xl w-12 h-12">{currentEntry.mood}</Button>
+                        <Button variant="ghost" size="icon" className="text-3xl w-12 h-12">
+                            {currentEntry.mood || <SmilePlus className="h-8 w-8 text-muted-foreground"/>}
+                        </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2">
-                        <div className="flex gap-2">
+                        <div className="flex gap-1 flex-wrap max-w-24">
                         {moods.map(mood => (
-                            <Button key={mood} variant="ghost" size="icon" className="text-2xl" onClick={() => handleUpdateEntry('mood', mood)}>{mood}</Button>
+                            <Button key={mood} variant="ghost" size="icon" className="text-2xl" onClick={() => handleUpdateEntry('mood', mood)}>{mood === 'None' ? <XCircle className="h-6 w-6"/> : mood}</Button>
                         ))}
                         </div>
                     </PopoverContent>

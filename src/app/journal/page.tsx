@@ -38,7 +38,7 @@ export default function JournalListPage() {
           <Button asChild size="lg">
               <Link href="/journal/new">
                   <PlusCircle className="mr-2" />
-                  Another....
+                  Create New Entry
               </Link>
           </Button>
         </div>
@@ -54,11 +54,13 @@ export default function JournalListPage() {
                             <Link href={`/journal/${entry.id}`} key={entry.id} className="block">
                                 <div className="p-4 rounded-lg bg-background/50 hover:bg-primary/20 border border-border transition-colors">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="font-bold text-primary truncate">{entry.title}</h3>
-                                            <p className="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                        <div className="flex items-center gap-3">
+                                             <div className="text-2xl">{entry.mood}</div>
+                                             <div>
+                                                <h3 className="font-bold text-primary truncate">{entry.title}</h3>
+                                                <p className="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                             </div>
                                         </div>
-                                        <div className="text-2xl">{entry.mood}</div>
                                     </div>
                                     <p className="text-sm text-muted-foreground truncate opacity-70 mt-2">{entry.content}</p>
                                 </div>
