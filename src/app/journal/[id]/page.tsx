@@ -26,13 +26,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getJournalEntry, saveJournalEntry, deleteJournalEntry } from '../actions';
 
 const moods = ["😊", "😢", "😠", "😍", "🤔", "😴"];
 
 export default function JournalEntryPage() {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [currentEntry, setCurrentEntry] = useState<JournalEntry | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { toast } = useToast();
   const router = useRouter();
@@ -42,16 +43,8 @@ export default function JournalEntryPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load all entries from localStorage on mount
   useEffect(() => {
-    try {
-      const savedEntries = localStorage.getItem('bloom-journal');
-      const allEntries = savedEntries ? JSON.parse(savedEntries, (key, value) => {
-          if (key === 'createdAt' || key === 'updatedAt') return new Date(value);
-          return value;
-      }) : [];
-      setEntries(allEntries);
-
+    async function fetchEntry() {
       if (entryId === 'new') {
         setCurrentEntry({
           id: `new-${Date.now()}`,
@@ -63,14 +56,12 @@ export default function JournalEntryPage() {
           mood: "😊",
         });
       } else {
-        const entry = allEntries.find((e: JournalEntry) => e.id === entryId);
-        setCurrentEntry(entry || null);
+        const entry = await getJournalEntry(entryId);
+        setCurrentEntry(entry as JournalEntry | null);
       }
-    } catch (error) {
-      console.error("Failed to load journal entries from localStorage", error);
-      toast({ title: "Error", description: "Could not load journal entries.", variant: "destructive" });
     }
-  }, [entryId, toast]);
+    fetchEntry();
+  }, [entryId]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -86,7 +77,7 @@ export default function JournalEntryPage() {
     }
   }
 
-  const handleSaveEntry = () => {
+  const handleSaveEntry = async () => {
     if (!currentEntry || !currentEntry.title.trim() || !currentEntry.content.trim()) {
       toast({
         title: "Cannot Save",
@@ -95,37 +86,28 @@ export default function JournalEntryPage() {
       });
       return;
     }
-
+    setIsSaving(true);
     const isNew = currentEntry.id.startsWith('new-');
-    let entryToSave = { ...currentEntry, updatedAt: new Date() };
-    let newEntries;
 
-    if (isNew) {
-      entryToSave.id = new Date().toISOString(); 
-      newEntries = [...entries, entryToSave];
-    } else {
-      newEntries = entries.map(e => e.id === currentEntry.id ? entryToSave : e);
-    }
-    
     try {
-        localStorage.setItem('bloom-journal', JSON.stringify(newEntries));
-        setEntries(newEntries);
-        setCurrentEntry(entryToSave);
+        const savedEntry = await saveJournalEntry(currentEntry);
+        setCurrentEntry(savedEntry as JournalEntry);
         toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
         if (isNew) {
-            router.replace(`/journal/${entryToSave.id}`);
+            router.replace(`/journal/${savedEntry.id}`);
         }
     } catch (error) {
         console.error("Failed to save entry:", error);
         toast({ title: "Error Saving", description: "Could not save your entry.", variant: "destructive" });
+    } finally {
+        setIsSaving(false);
     }
   };
 
-  const handleDeleteEntry = () => {
+  const handleDeleteEntry = async () => {
       if (!currentEntry || currentEntry.id.startsWith('new-')) return;
-      const newEntries = entries.filter(e => e.id !== currentEntry.id);
       try {
-        localStorage.setItem('bloom-journal', JSON.stringify(newEntries));
+        await deleteJournalEntry(currentEntry.id);
         toast({ title: "Entry Deleted", variant: 'destructive' });
         router.push('/journal');
       } catch (error) {
@@ -147,8 +129,7 @@ export default function JournalEntryPage() {
 
   const handleRemoveImage = () => {
     if (currentEntry) {
-        const { imageUrl, ...rest } = currentEntry;
-        setCurrentEntry(rest as JournalEntry);
+        handleUpdateEntry('imageUrl', undefined);
     }
   };
 
@@ -219,7 +200,10 @@ export default function JournalEntryPage() {
                     </PopoverContent>
                     </Popover>
 
-                    <Button onClick={handleSaveEntry} size="sm"><Save className="mr-2"/>Save</Button>
+                    <Button onClick={handleSaveEntry} size="sm" disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>}
+                        Save
+                    </Button>
                     {!currentEntry.id.startsWith('new-') && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>

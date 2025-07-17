@@ -12,35 +12,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PlusCircle, MoreVertical, Edit, Trash2, Home, Gift } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import CreateWishForm from '@/components/wish/create-wish-form';
 import type { Wish } from '@/domain/entities';
+import { getWishes, saveWish, deleteWish } from './actions';
 
-// Mock data for initial display
-const mockWishes: Wish[] = [
-    {
-        id: '1',
-        userId: 'user1',
-        title: 'Trip to Japan',
-        note: 'Visit Kyoto during cherry blossom season.',
-        imageUrl: 'https://placehold.co/600x400.png',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: '2',
-        userId: 'user1',
-        title: 'New Camera',
-        note: 'Sony A7 IV for photography hobby.',
-        imageUrl: 'https://placehold.co/600x400.png',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }
-];
 
 export default function WishlistPage() {
   const [wishes, setWishes] = useState<Wish[]>([]);
@@ -48,29 +28,14 @@ export default function WishlistPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
 
-   // Load data from localStorage on mount
+   // Load data from db on mount
   useEffect(() => {
-    try {
-      const savedWishes = localStorage.getItem('bloom-wishes');
-      if (savedWishes) {
-        setWishes(JSON.parse(savedWishes));
-      } else {
-        setWishes(mockWishes); // Initialize with mock data if nothing is saved
-      }
-    } catch (error) {
-        console.error("Failed to load wishes from localStorage", error);
-        setWishes(mockWishes); // Fallback to mock data on error
+    async function fetchWishes() {
+      const dbWishes = await getWishes();
+      setWishes(dbWishes as Wish[]);
     }
+    fetchWishes();
   }, []);
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    try {
-        if(wishes.length > 0) localStorage.setItem('bloom-wishes', JSON.stringify(wishes));
-    } catch (error) {
-        console.error("Failed to save wishes to localStorage", error);
-    }
-  }, [wishes]);
 
 
   const openCreateForm = () => {
@@ -83,31 +48,32 @@ export default function WishlistPage() {
     setIsFormOpen(true);
   }
 
-  const handleFormSubmit = (data: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (editingWish) {
-      // Edit existing wish
-      const updatedWishes = wishes.map(w => w.id === editingWish.id ? { ...w, ...data, updatedAt: new Date() } : w);
-      setWishes(updatedWishes);
-      toast({ title: "Wish Updated!", description: `"${data.title}" has been saved.` });
-    } else {
-      // Create new wish
-      const newWish: Wish = {
-        id: new Date().toISOString(),
-        userId: 'user1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ...data,
-      };
-      setWishes([newWish, ...wishes]);
-      toast({ title: "Wish Added!", description: `"${data.title}" has been added to your wishlist.` });
+  const handleFormSubmit = async (data: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+    try {
+      const wishData = editingWish ? { ...data, id: editingWish.id } : data;
+      await saveWish(wishData);
+
+      const updatedWishes = await getWishes();
+      setWishes(updatedWishes as Wish[]);
+
+      toast({ title: editingWish ? "Wish Updated!" : "Wish Added!", description: `"${data.title}" has been saved.` });
+      setIsFormOpen(false);
+      setEditingWish(null);
+    } catch (error) {
+       console.error("Failed to save wish", error);
+       toast({ title: "Error", description: "Could not save wish", variant: "destructive" });
     }
-    setIsFormOpen(false);
-    setEditingWish(null);
   };
 
-  const handleDeleteWish = (wishId: string) => {
-    setWishes(wishes.filter(w => w.id !== wishId));
-    toast({ title: "Wish Removed", variant: 'destructive' });
+  const handleDeleteWish = async (wishId: string) => {
+    try {
+        await deleteWish(wishId);
+        setWishes(wishes.filter(w => w.id !== wishId));
+        toast({ title: "Wish Removed", variant: 'destructive' });
+    } catch (error) {
+        console.error("Failed to delete wish", error);
+        toast({ title: "Error", description: "Could not delete wish.", variant: "destructive" });
+    }
   }
 
   return (
@@ -186,7 +152,7 @@ export default function WishlistPage() {
                          </div>
                        )}
                        <div className="p-4">
-                        <p className="text-muted-foreground">{wish.note}</p>
+                        <p className="text-muted-foreground">{wish.note ?? ''}</p>
                        </div>
                     </CardContent>
                 </Card>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,46 +19,7 @@ import type { Routine } from '@/domain/entities';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-
-
-// Mock data for initial display
-const mockRoutines: Routine[] = [
-    {
-        id: '1',
-        userId: 'user1',
-        name: 'Hair Wash Day',
-        frequency: 'weekly',
-        daysOfWeek: [0, 3], // Sunday, Wednesday
-        timeOfDay: '20:00',
-        rewardPoints: 20,
-        remindersEnabled: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: '2',
-        userId: 'user1',
-        name: 'Meal Prep',
-        frequency: 'weekly',
-        daysOfWeek: [0], // Sunday
-        timeOfDay: '16:00',
-        rewardPoints: 50,
-        remindersEnabled: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    },
-    {
-        id: '3',
-        userId: 'user1',
-        name: 'Daily Gratitude',
-        frequency: 'daily',
-        timeOfDay: '08:00',
-        rewardPoints: 10,
-        remindersEnabled: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }
-];
+import { getRoutines, saveRoutine, deleteRoutine, markRoutineAsDone, getCompletionStatus } from './actions';
 
 const weekDays = [
     { label: 'S', value: '0' },
@@ -70,10 +30,6 @@ const weekDays = [
     { label: 'F', value: '5' },
     { label: 'S', value: '6' },
 ];
-
-const getDayName = (dayIndex: number) => {
-    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayIndex];
-}
 
 type CompletionStatus = {
     [routineId: string]: string; // Store date string 'YYYY-MM-DD'
@@ -87,40 +43,17 @@ export default function RoutinesPage() {
   
   const { toast } = useToast();
 
-  // Load data from localStorage on mount
   useEffect(() => {
-    try {
-      const savedRoutines = localStorage.getItem('bloom-routines');
-      const savedCompletionStatus = localStorage.getItem('bloom-completionStatus');
-
-      if (savedRoutines) {
-        setRoutines(JSON.parse(savedRoutines, (key, value) => {
-             if (key === 'createdAt' || key === 'updatedAt') return new Date(value);
-             return value;
-        }));
-      } else {
-        setRoutines(mockRoutines); // Initialize with mock data if nothing is saved
-      }
-
-      if (savedCompletionStatus) {
-        setCompletionStatus(JSON.parse(savedCompletionStatus));
-      }
-
-    } catch (error) {
-        console.error("Failed to load from localStorage", error);
-        setRoutines(mockRoutines); // Fallback to mock data on error
+    async function fetchData() {
+        const [dbRoutines, dbStatus] = await Promise.all([
+            getRoutines(),
+            getCompletionStatus()
+        ]);
+        setRoutines(dbRoutines);
+        setCompletionStatus(dbStatus);
     }
+    fetchData();
   }, []);
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    try {
-        if(routines.length > 0) localStorage.setItem('bloom-routines', JSON.stringify(routines));
-        localStorage.setItem('bloom-completionStatus', JSON.stringify(completionStatus));
-    } catch (error) {
-        console.error("Failed to save to localStorage", error);
-    }
-  }, [routines, completionStatus]);
 
   const openCreateForm = () => {
     setEditingRoutine(null);
@@ -132,44 +65,47 @@ export default function RoutinesPage() {
     setIsFormOpen(true);
   }
 
-  const handleFormSubmit = (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (editingRoutine) {
-      // Edit existing routine
-      const updatedRoutines = routines.map(r => r.id === editingRoutine.id ? { ...r, ...data, updatedAt: new Date() } : r);
-      setRoutines(updatedRoutines);
-      toast({ title: "Routine Updated!", description: `"${data.name}" has been saved.` });
-    } else {
-      // Create new routine
-      const newRoutine: Routine = {
-        id: new Date().toISOString(), // Use a more unique ID
-        userId: 'user1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ...data,
-      };
-      setRoutines([...routines, newRoutine]);
-      toast({ title: "Routine Created!", description: `"${data.name}" has been added.` });
+  const handleFormSubmit = async (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+    try {
+        const routineData = editingRoutine ? { ...data, id: editingRoutine.id } : data;
+        await saveRoutine(routineData);
+
+        const updatedRoutines = await getRoutines();
+        setRoutines(updatedRoutines);
+        
+        toast({ title: editingRoutine ? "Routine Updated!" : "Routine Created!", description: `"${data.name}" has been saved.` });
+        setIsFormOpen(false);
+        setEditingRoutine(null);
+    } catch (error) {
+        console.error("Failed to save routine:", error);
+        toast({ title: "Error", description: "Could not save the routine.", variant: "destructive" });
     }
-    setIsFormOpen(false);
-    setEditingRoutine(null);
   };
 
-  const handleDeleteRoutine = (routineId: string) => {
-    setRoutines(routines.filter(r => r.id !== routineId));
-    // Also remove from completion status
-    const newCompletionStatus = { ...completionStatus };
-    delete newCompletionStatus[routineId];
-    setCompletionStatus(newCompletionStatus);
-    toast({ title: "Routine Deleted", variant: 'destructive' });
+  const handleDeleteRoutine = async (routineId: string) => {
+    try {
+        await deleteRoutine(routineId);
+        setRoutines(routines.filter(r => r.id !== routineId));
+        toast({ title: "Routine Deleted", variant: 'destructive' });
+    } catch (error) {
+        console.error("Failed to delete routine:", error);
+        toast({ title: "Error", description: "Could not delete the routine.", variant: "destructive" });
+    }
   }
 
-  const handleMarkAsDone = (routine: Routine) => {
-    const today = new Date().toISOString().split('T')[0];
-    setCompletionStatus(prev => ({ ...prev, [routine.id]: today }));
-    toast({
-      title: "Routine Complete!",
-      description: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
-    });
+  const handleMarkAsDone = async (routine: Routine) => {
+    try {
+        await markRoutineAsDone(routine.id);
+        const today = new Date().toISOString().split('T')[0];
+        setCompletionStatus(prev => ({ ...prev, [routine.id]: today }));
+        toast({
+          title: "Routine Complete!",
+          description: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
+        });
+    } catch (error) {
+        console.error("Failed to mark as done:", error);
+        toast({ title: "Error", description: "Could not complete the routine.", variant: "destructive" });
+    }
   }
 
   const isCompletedToday = (routineId: string) => {

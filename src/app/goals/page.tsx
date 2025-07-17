@@ -19,43 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import type { Goal, MeasurableGoal } from "@/domain/entities";
 import { CreateGoalForm } from "@/components/goals/create-goal-form";
-
-// Mock Data - In a real app, this would come from a database.
-const mockGoals: (Goal | MeasurableGoal)[] = [
-  {
-    id: "1",
-    name: "Gain 8kg in 3 months",
-    type: "personal_measurable",
-    targetValue: 8,
-    currentValue: 2,
-    unit: "kg",
-    rewardPoints: 200,
-    userId: 'user1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    name: "Read the Book of John",
-    type: "spiritual",
-    rewardPoints: 100,
-    userId: 'user1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "3",
-    name: "Meditate 15 mins daily for a month",
-    type: "personal_measurable",
-    targetValue: 30,
-    currentValue: 10,
-    unit: "days",
-    rewardPoints: 150,
-    userId: 'user1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+import { getGoals, saveGoal, deleteGoal } from './actions';
 
 
 export default function GoalsPage() {
@@ -64,32 +28,13 @@ export default function GoalsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
   
-  // Load data from localStorage on mount
   useEffect(() => {
-    try {
-      const savedGoals = localStorage.getItem('bloom-goals');
-      if (savedGoals) {
-        setGoals(JSON.parse(savedGoals, (key, value) => {
-             if (key === 'createdAt' || key === 'updatedAt') return new Date(value);
-             return value;
-        }));
-      } else {
-        setGoals(mockGoals); // Initialize with mock data if nothing is saved
-      }
-    } catch (error) {
-        console.error("Failed to load goals from localStorage", error);
-        setGoals(mockGoals); // Fallback to mock data on error
+    async function fetchGoals() {
+      const dbGoals = await getGoals();
+      setGoals(dbGoals as (Goal | MeasurableGoal)[]);
     }
+    fetchGoals();
   }, []);
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    try {
-        if(goals.length > 0) localStorage.setItem('bloom-goals', JSON.stringify(goals));
-    } catch (error) {
-        console.error("Failed to save goals to localStorage", error);
-    }
-  }, [goals]);
 
 
   const openCreateForm = () => {
@@ -102,31 +47,32 @@ export default function GoalsPage() {
     setIsFormOpen(true);
   }
 
-  const handleFormSubmit = (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (editingGoal) {
-      // Edit existing goal
-      const updatedGoals = goals.map(g => g.id === editingGoal.id ? { ...g, ...data, updatedAt: new Date() } : g);
-      setGoals(updatedGoals);
-      toast({ title: "Goal Updated!", description: `"${data.name}" has been saved.` });
-    } else {
-      // Create new goal
-      const newGoal: Goal | MeasurableGoal = {
-        id: new Date().toISOString(),
-        userId: 'user1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ...data,
-      };
-      setGoals([newGoal, ...goals]);
-      toast({ title: "Goal Created!", description: `"${data.name}" has been added.` });
+  const handleFormSubmit = async (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+    try {
+        const goalData = editingGoal ? { ...data, id: editingGoal.id } : data;
+        await saveGoal(goalData);
+        
+        const updatedGoals = await getGoals();
+        setGoals(updatedGoals as (Goal | MeasurableGoal)[]);
+
+        toast({ title: editingGoal ? "Goal Updated!" : "Goal Created!", description: `"${data.name}" has been saved.` });
+        setIsFormOpen(false);
+        setEditingGoal(null);
+    } catch (error) {
+        console.error("Failed to save goal", error);
+        toast({ title: "Error", description: "Could not save the goal.", variant: "destructive" });
     }
-    setIsFormOpen(false);
-    setEditingGoal(null);
   };
 
-  const handleDeleteGoal = (goalId: string) => {
-    setGoals(goals.filter(g => g.id !== goalId));
-    toast({ title: "Goal Deleted", variant: 'destructive' });
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+        await deleteGoal(goalId);
+        setGoals(goals.filter(g => g.id !== goalId));
+        toast({ title: "Goal Deleted", variant: 'destructive' });
+    } catch (error) {
+        console.error("Failed to delete goal", error);
+        toast({ title: "Error", description: "Could not delete the goal.", variant: "destructive" });
+    }
   }
 
   return (
@@ -205,10 +151,10 @@ export default function GoalsPage() {
                         </DropdownMenu>
                     </CardHeader>
                     <CardContent>
-                        {goal.type === 'personal_measurable' && 'currentValue' in goal && 'targetValue' in goal && (
+                        {goal.type === 'personal_measurable' && 'currentValue' in goal && 'targetValue' in goal && (goal as MeasurableGoal).targetValue > 0 && (
                             <div className="space-y-2">
-                                <Progress value={(goal.currentValue / goal.targetValue) * 100} />
-                                <p className="text-sm text-muted-foreground text-right">{goal.currentValue} / {goal.targetValue} {goal.unit}</p>
+                                <Progress value={((goal as MeasurableGoal).currentValue / (goal as MeasurableGoal).targetValue) * 100} />
+                                <p className="text-sm text-muted-foreground text-right">{(goal as MeasurableGoal).currentValue} / {(goal as MeasurableGoal).targetValue} {(goal as MeasurableGoal).unit}</p>
                             </div>
                         )}
                         {goal.type === 'spiritual' && (
