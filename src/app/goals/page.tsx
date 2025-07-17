@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Target, MoreVertical, Edit, Trash2, CheckCircle } from "lucide-react";
+import { PlusCircle, Target, MoreVertical, Edit, Trash2, CheckCircle, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import type { Goal, MeasurableGoal } from "@/domain/entities";
 import { CreateGoalForm } from "@/components/goals/create-goal-form";
+import { UpdateGoalProgressForm } from "@/components/goals/update-goal-progress-form";
 import { getGoals, saveGoal, deleteGoal, completeGoal } from './actions';
 
 
@@ -26,6 +27,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<(Goal | MeasurableGoal)[]>([]);
   const [editingGoal, setEditingGoal] = useState<Goal | MeasurableGoal | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -47,6 +49,11 @@ export default function GoalsPage() {
     setIsFormOpen(true);
   }
 
+  const openUpdateProgressForm = (goal: MeasurableGoal) => {
+    setEditingGoal(goal);
+    setIsUpdateFormOpen(true);
+  }
+
   const handleFormSubmit = async (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
     try {
         const goalData = editingGoal ? { ...data, id: editingGoal.id } : data;
@@ -61,6 +68,27 @@ export default function GoalsPage() {
     } catch (error) {
         console.error("Failed to save goal", error);
         toast({ title: "Error", description: "Could not save the goal.", variant: "destructive" });
+    }
+  };
+
+  const handleUpdateProgressSubmit = async (data: { currentValue: number }) => {
+    if (!editingGoal) return;
+    try {
+      const updatedGoalData = {
+        ...editingGoal,
+        currentValue: data.currentValue,
+      };
+      await saveGoal(updatedGoalData);
+
+      const updatedGoals = await getGoals();
+      setGoals(updatedGoals as (Goal | MeasurableGoal)[]);
+
+      toast({ title: "Progress Updated!", description: `Your progress for "${editingGoal.name}" has been updated.` });
+      setIsUpdateFormOpen(false);
+      setEditingGoal(null);
+    } catch (error) {
+      console.error("Failed to update progress", error);
+      toast({ title: "Error", description: "Could not update progress.", variant: "destructive" });
     }
   };
 
@@ -121,7 +149,7 @@ export default function GoalsPage() {
 
         <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             {goals.map((goal) => (
-                <Card key={goal.id} className="bg-card/50 backdrop-blur-sm border-white/10">
+                <Card key={goal.id} className="bg-card/50 backdrop-blur-sm border-white/10 flex flex-col">
                     <CardHeader className="flex flex-row items-start justify-between">
                         <CardTitle className="text-xl text-primary flex items-center gap-2">
                             <Target />
@@ -161,7 +189,7 @@ export default function GoalsPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-grow">
                         {goal.type === 'personal_measurable' && 'currentValue' in goal && 'targetValue' in goal && (goal as MeasurableGoal).targetValue > 0 && (
                             <div className="space-y-2">
                                 <Progress value={((goal as MeasurableGoal).currentValue / (goal as MeasurableGoal).targetValue) * 100} />
@@ -172,12 +200,29 @@ export default function GoalsPage() {
                              <p className="text-sm text-muted-foreground">A journey of faith and reflection.</p>
                         )}
                     </CardContent>
-                    <CardFooter className="flex justify-between items-center">
+                    <CardFooter className="flex justify-between items-center gap-2">
                         <p className="text-accent font-bold">{goal.rewardPoints}pts</p>
-                        <Button variant="outline" size="sm" onClick={() => handleCompleteGoal(goal)}>
-                            <CheckCircle className="mr-2" />
-                            Complete
-                        </Button>
+                        <div className="flex gap-2">
+                           {goal.type === 'personal_measurable' && (
+                                <Dialog open={isUpdateFormOpen && editingGoal?.id === goal.id} onOpenChange={(isOpen) => { if (!isOpen) setEditingGoal(null); setIsUpdateFormOpen(isOpen); }}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="secondary" size="sm" onClick={() => openUpdateProgressForm(goal as MeasurableGoal)}>
+                                            <RefreshCw />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle>Update Progress</DialogTitle>
+                                        </DialogHeader>
+                                        {editingGoal && <UpdateGoalProgressForm onProgressSubmitted={handleUpdateProgressSubmit} goalToEdit={editingGoal as MeasurableGoal} />}
+                                    </DialogContent>
+                                </Dialog>
+                           )}
+                           <Button variant="outline" size="sm" onClick={() => handleCompleteGoal(goal)}>
+                                <CheckCircle className="mr-2" />
+                                Complete
+                            </Button>
+                        </div>
                     </CardFooter>
                 </Card>
             ))}

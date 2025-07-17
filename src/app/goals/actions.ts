@@ -15,7 +15,7 @@ export async function getGoals() {
   });
 }
 
-export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
+export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = goal;
   const userId = 'user@example.com'; // In a real app, this would come from authentication
 
@@ -23,10 +23,10 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'id' | 'userId'
   if (!user) {
     throw new Error("User not found");
   }
-
+  
   const goalData = {
     ...data,
-    type: data.type as GoalType, // Explicitly cast the string to the enum type
+    type: data.type as GoalType,
     rewardPoints: Number(data.rewardPoints),
     targetValue: data.type === 'personal_measurable' ? Number(data.targetValue) : null,
     currentValue: data.type === 'personal_measurable' ? Number(data.currentValue) : null,
@@ -41,7 +41,16 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'id' | 'userId'
     });
   } else {
     await prisma.goal.create({
-      data: goalData,
+      data: {
+          ...goalData,
+          name: goalData.name,
+          type: goalData.type,
+          rewardPoints: goalData.rewardPoints,
+          targetValue: goalData.targetValue,
+          currentValue: goalData.currentValue,
+          unit: goalData.unit,
+          userId: goalData.userId,
+      }
     });
   }
 
