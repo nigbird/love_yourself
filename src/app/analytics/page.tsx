@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Trophy, Gift, ArrowLeft } from "lucide-react";
-import type { GoalCompletionLog, WishFulfillmentLog } from "@prisma/client";
+import type { WishFulfillmentLog } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { getFulfilledWishes } from "../wish/actions";
 import { GoalStatusChart, RoutineCompletionChart } from "@/components/dashboard-charts";
