@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { PrismaClient } from '@prisma/client';
-import type { Goal, MeasurableGoal } from '@/domain/entities';
+import type { Goal, GoalType, MeasurableGoal } from '@/domain/entities';
 
 const prisma = new PrismaClient();
 
@@ -26,9 +26,11 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'id' | 'userId'
 
   const goalData = {
     ...data,
+    type: data.type as GoalType, // Correctly cast the type string to the enum type
     rewardPoints: Number(data.rewardPoints),
-    targetValue: data.type === 'personal_measurable' ? Number(data.targetValue) : undefined,
-    currentValue: data.type === 'personal_measurable' ? Number(data.currentValue) : undefined,
+    targetValue: data.type === 'personal_measurable' ? Number(data.targetValue) : null,
+    currentValue: data.type === 'personal_measurable' ? Number(data.currentValue) : null,
+    unit: data.type === 'personal_measurable' ? data.unit : null,
     userId: user.id,
   };
 
