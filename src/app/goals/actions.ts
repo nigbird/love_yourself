@@ -2,8 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { PrismaClient } from '@prisma/client';
-import type { Goal, GoalType, MeasurableGoal } from '@/domain/entities';
+import { PrismaClient, GoalType } from '@prisma/client';
+import type { Goal, MeasurableGoal } from '@/domain/entities';
 
 const prisma = new PrismaClient();
 
@@ -26,7 +26,7 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'id' | 'userId'
 
   const goalData = {
     ...data,
-    type: data.type as GoalType, // Correctly cast the type string to the enum type
+    type: data.type as GoalType, // Explicitly cast the string to the enum type
     rewardPoints: Number(data.rewardPoints),
     targetValue: data.type === 'personal_measurable' ? Number(data.targetValue) : null,
     currentValue: data.type === 'personal_measurable' ? Number(data.currentValue) : null,

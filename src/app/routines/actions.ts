@@ -26,7 +26,7 @@ export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' 
 
   const routineData = {
     ...data,
-    frequency: data.frequency as RoutineFrequency, // Correctly cast the frequency string to the enum type
+    frequency: data.frequency as RoutineFrequency, // Explicitly cast the string to the enum type
     rewardPoints: Number(data.rewardPoints),
     userId: user.id,
   };
