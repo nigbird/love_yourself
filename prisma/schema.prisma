@@ -1,76 +1,77 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// User Model
-// Represents an application user.
+generator client {
+  provider = "prisma-client-js"
+}
+
 model User {
   id           String @id @default(cuid())
   name         String
   email        String @unique
   rewardPoints Int    @default(0)
 
+  routines      Routine[]
+  goals         Goal[]
+  journalEntries JournalEntry[]
+  wishes        Wish[]
+  
+  routineCompletionLogs RoutineCompletionLog[]
+  goalCompletionLogs    GoalCompletionLog[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  routines       Routine[]
-  goals          Goal[]
-  journalEntries JournalEntry[]
-  wishes         Wish[]
 }
 
-// Routine Models
-// Represents a user-defined self-care routine.
 enum RoutineFrequency {
-  DAILY
-  WEEKLY
-  MONTHLY
-  CUSTOM
+  daily
+  weekly
+  monthly
+  custom
 }
 
 model Routine {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   name             String
   frequency        RoutineFrequency
-  daysOfWeek       Int[] // 0 for Sunday, 6 for Saturday
-  timeOfDay        String? // e.g., "08:00"
-  remindersEnabled Boolean  @default(true)
-  rewardPoints     Int      @default(10)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  daysOfWeek       Int[]
+  timeOfDay        String?
+  remindersEnabled Boolean   @default(true)
+  rewardPoints     Int       @default(10)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  
   completionLogs RoutineCompletionLog[]
 
-  @@index([userId])
+  @@unique([name, userId])
 }
 
 model RoutineCompletionLog {
   id          String   @id @default(cuid())
   completedAt DateTime @default(now())
   notes       String?
-
+  
   routineId String
   routine   Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([routineId])
+  @@index([userId])
 }
 
-// Goal Models
-// Represents personal or spiritual goals for the user.
 enum GoalType {
-  PERSONAL_MEASURABLE
-  SPIRITUAL
+  personal_measurable
+  spiritual
 }
 
 model Goal {
@@ -78,44 +79,45 @@ model Goal {
   name         String
   type         GoalType
   rewardPoints Int
-  isCompleted  Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Fields for MeasurableGoal
-  startDate    DateTime?
-  endDate      DateTime?
+  
+  // Fields for measurable goals
   targetValue  Float?
   currentValue Float?   @default(0)
-  unit         String? // e.g., "kg", "days", "pages"
+  unit         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   completionLogs GoalCompletionLog[]
 
-  @@index([userId])
+  @@unique([name, userId])
 }
 
 model GoalCompletionLog {
   id          String   @id @default(cuid())
   completedAt DateTime @default(now())
   notes       String?
-  value       Float? // For measurable goals, the progress made
-
+  value       Float?   // For logging progress on measurable goals
+  
   goalId String
-  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal   Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([goalId])
+  @@index([userId])
 }
 
-
-// Journal Model
-// Represents a single journal entry for a user.
 model JournalEntry {
-  id      String @id @default(cuid())
-  content String @db.Text
-  
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  imageUrl  String?
+  mood      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -125,15 +127,11 @@ model JournalEntry {
   @@index([userId])
 }
 
-
-// Wishlist Model
-// Represents an item on the user's wishlist.
 model Wish {
-  id       String   @id @default(cuid())
-  title    String
-  note     String?  @db.Text
-  imageUrl String?
-  
+  id        String   @id @default(cuid())
+  title     String
+  note      String?
+  imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
