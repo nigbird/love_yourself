@@ -11,15 +11,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PlusCircle, MoreVertical, Edit, Trash2, Home, Gift } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { PlusCircle, MoreVertical, Edit, Trash2, Home, Gift, CheckCircle } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import CreateWishForm from '@/components/wish/create-wish-form';
 import type { Wish } from '@/domain/entities';
-import { getWishes, saveWish, deleteWish } from './actions';
+import { getWishes, saveWish, deleteWish, fulfillWish } from './actions';
 
 
 export default function WishlistPage() {
@@ -73,6 +73,17 @@ export default function WishlistPage() {
     } catch (error) {
         console.error("Failed to delete wish", error);
         toast({ title: "Error", description: "Could not delete wish.", variant: "destructive" });
+    }
+  }
+
+  const handleFulfillWish = async (wish: Wish) => {
+    try {
+        await fulfillWish(wish);
+        setWishes(wishes.filter(w => w.id !== wish.id));
+        toast({ title: "Wish Fulfilled!", description: `Congratulations on achieving "${wish.title}"!` });
+    } catch (error) {
+        console.error("Failed to fulfill wish", error);
+        toast({ title: "Error", description: "Could not fulfill the wish.", variant: "destructive" });
     }
   }
 
@@ -155,9 +166,19 @@ export default function WishlistPage() {
                         <p className="text-muted-foreground">{wish.note ?? ''}</p>
                        </div>
                     </CardContent>
+                    <CardFooter>
+                         <Button onClick={() => handleFulfillWish(wish)} className="w-full" variant="outline">
+                            <CheckCircle className="mr-2"/>
+                            Fulfilled
+                        </Button>
+                    </CardFooter>
                 </Card>
             ))}
         </div>
+        
+        {wishes.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">Your wishlist is empty. Add a wish to get started!</p>
+        )}
 
         <div className="text-center mt-8">
             <Button asChild variant="ghost">
@@ -168,3 +189,4 @@ export default function WishlistPage() {
     </div>
   );
 }
+

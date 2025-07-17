@@ -9,21 +9,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GoalCompletionChart, RoutineCompletionChart } from "@/components/dashboard-charts";
 import { getCompletedGoals } from "../goals/actions";
-import type { GoalCompletionLog } from "@prisma/client";
+import { getFulfilledWishes } from "../wish/actions";
+import type { GoalCompletionLog, WishFulfillmentLog } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
-import { Trophy } from "lucide-react";
+import { Trophy, Gift } from "lucide-react";
 
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("monthly");
   const [completedGoals, setCompletedGoals] = useState<GoalCompletionLog[]>([]);
+  const [fulfilledWishes, setFulfilledWishes] = useState<WishFulfillmentLog[]>([]);
 
   useEffect(() => {
-    async function fetchCompletedGoals() {
-      const goals = await getCompletedGoals();
+    async function fetchData() {
+      const [goals, wishes] = await Promise.all([
+        getCompletedGoals(),
+        getFulfilledWishes()
+      ]);
       setCompletedGoals(goals);
+      setFulfilledWishes(wishes);
     }
-    fetchCompletedGoals();
+    fetchData();
   }, []);
 
   return (
@@ -68,32 +74,60 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
         
-        <Card className="bg-card/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="text-accent"/>
-              Completed Goals
-            </CardTitle>
-            <CardDescription>A log of your amazing achievements.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {completedGoals.length > 0 ? (
-                completedGoals.map(goal => (
-                  <div key={goal.id} className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
-                    <div>
-                      <p className="font-semibold text-primary">{goal.goalName}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(goal.completedAt).toLocaleDateString()}</p>
+        <div className="grid md:grid-cols-2 gap-8">
+            <Card className="bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                    <Trophy className="text-accent"/>
+                    Completed Goals
+                    </CardTitle>
+                    <CardDescription>A log of your amazing achievements.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {completedGoals.length > 0 ? (
+                        completedGoals.map(goal => (
+                        <div key={goal.id} className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
+                            <div>
+                            <p className="font-semibold text-primary">{goal.goalName}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(goal.completedAt).toLocaleDateString()}</p>
+                            </div>
+                            <Badge variant="secondary">+{goal.rewardPoints}pts</Badge>
+                        </div>
+                        ))
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4">You haven't completed any goals yet. Keep going!</p>
+                    )}
                     </div>
-                    <Badge variant="secondary">+{goal.rewardPoints}pts</Badge>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center py-4">You haven't completed any goals yet. Keep going!</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                    <Gift className="text-sky-300"/>
+                    Fulfilled Wishes
+                    </CardTitle>
+                    <CardDescription>Dreams that you have turned into reality.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {fulfilledWishes.length > 0 ? (
+                        fulfilledWishes.map(wish => (
+                        <div key={wish.id} className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
+                            <div>
+                            <p className="font-semibold text-sky-300">{wish.wishTitle}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(wish.fulfilledAt).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        ))
+                    ) : (
+                        <p className="text-muted-foreground text-center py-4">No wishes fulfilled yet. Make a wish!</p>
+                    )}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
 
         <div className="text-center">
             <Button asChild variant="ghost">
@@ -104,3 +138,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
