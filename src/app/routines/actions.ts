@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, RoutineFrequency } from '@prisma/client';
 import type { Routine } from '@/domain/entities';
 
 const prisma = new PrismaClient();
@@ -26,6 +26,7 @@ export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' 
 
   const routineData = {
     ...data,
+    frequency: data.frequency as RoutineFrequency, // Correctly cast the frequency string to the enum type
     rewardPoints: Number(data.rewardPoints),
     userId: user.id,
   };
