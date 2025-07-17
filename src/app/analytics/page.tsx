@@ -1,17 +1,30 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GoalCompletionChart, RoutineCompletionChart } from "@/components/dashboard-charts";
+import { getCompletedGoals } from "../goals/actions";
+import type { GoalCompletionLog } from "@prisma/client";
+import { Badge } from "@/components/ui/badge";
+import { Trophy } from "lucide-react";
 
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("monthly");
+  const [completedGoals, setCompletedGoals] = useState<GoalCompletionLog[]>([]);
+
+  useEffect(() => {
+    async function fetchCompletedGoals() {
+      const goals = await getCompletedGoals();
+      setCompletedGoals(goals);
+    }
+    fetchCompletedGoals();
+  }, []);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
@@ -57,13 +70,28 @@ export default function AnalyticsPage() {
         
         <Card className="bg-card/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>More Stats Coming Soon</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="text-accent"/>
+              Completed Goals
+            </CardTitle>
+            <CardDescription>A log of your amazing achievements.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>
-              This section is under construction. Soon you'll be able to see
-              even more detailed stats here!
-            </p>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {completedGoals.length > 0 ? (
+                completedGoals.map(goal => (
+                  <div key={goal.id} className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
+                    <div>
+                      <p className="font-semibold text-primary">{goal.goalName}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(goal.completedAt).toLocaleDateString()}</p>
+                    </div>
+                    <Badge variant="secondary">+{goal.rewardPoints}pts</Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">You haven't completed any goals yet. Keep going!</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 

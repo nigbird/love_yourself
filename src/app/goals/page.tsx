@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Target, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Target, MoreVertical, Edit, Trash2, CheckCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import type { Goal, MeasurableGoal } from "@/domain/entities";
 import { CreateGoalForm } from "@/components/goals/create-goal-form";
-import { getGoals, saveGoal, deleteGoal } from './actions';
+import { getGoals, saveGoal, deleteGoal, completeGoal } from './actions';
 
 
 export default function GoalsPage() {
@@ -72,6 +72,17 @@ export default function GoalsPage() {
     } catch (error) {
         console.error("Failed to delete goal", error);
         toast({ title: "Error", description: "Could not delete the goal.", variant: "destructive" });
+    }
+  }
+
+  const handleCompleteGoal = async (goal: Goal | MeasurableGoal) => {
+    try {
+        await completeGoal(goal);
+        setGoals(goals.filter(g => g.id !== goal.id));
+        toast({ title: "Goal Completed!", description: `Congratulations on achieving "${goal.name}"! You've earned ${goal.rewardPoints} points.` });
+    } catch (error) {
+        console.error("Failed to complete goal", error);
+        toast({ title: "Error", description: "Could not complete the goal.", variant: "destructive" });
     }
   }
 
@@ -163,7 +174,10 @@ export default function GoalsPage() {
                     </CardContent>
                     <CardFooter className="flex justify-between items-center">
                         <p className="text-accent font-bold">{goal.rewardPoints}pts</p>
-                        <Button variant="outline" size="sm" disabled>Log Progress</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleCompleteGoal(goal)}>
+                            <CheckCircle className="mr-2" />
+                            Complete
+                        </Button>
                     </CardFooter>
                 </Card>
             ))}

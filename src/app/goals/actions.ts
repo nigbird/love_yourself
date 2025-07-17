@@ -55,3 +55,58 @@ export async function deleteGoal(id: string) {
   });
   revalidatePath('/goals');
 }
+
+export async function completeGoal(goal: Goal | MeasurableGoal) {
+  const userId = 'user@example.com';
+  const user = await prisma.user.findUnique({ where: { email: userId } });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Create a log entry for the completed goal
+  await prisma.goalCompletionLog.create({
+    data: {
+      goalId: goal.id,
+      userId: user.id,
+      goalName: goal.name,
+      goalType: goal.type as GoalType,
+      rewardPoints: goal.rewardPoints,
+      completedAt: new Date(),
+    }
+  });
+
+  // Optionally, add reward points to the user
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      rewardPoints: {
+        increment: goal.rewardPoints
+      }
+    }
+  });
+
+  // Delete the original goal
+  await prisma.goal.delete({
+    where: { id: goal.id },
+  });
+
+  revalidatePath('/goals');
+  revalidatePath('/analytics');
+}
+
+export async function getCompletedGoals() {
+    const userId = 'user@example.com';
+    const user = await prisma.user.findUnique({ where: { email: userId } });
+    if (!user) {
+        return [];
+    }
+
+    return prisma.goalCompletionLog.findMany({
+        where: {
+            userId: user.id,
+        },
+        orderBy: {
+            completedAt: 'desc',
+        }
+    });
+}
