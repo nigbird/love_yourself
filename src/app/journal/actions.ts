@@ -33,14 +33,20 @@ export async function saveJournalEntry(entry: Omit<JournalEntry, 'userId' | 'cre
     const data = {
         title: entry.title,
         content: entry.content,
-        mood: entry.mood,
+        mood: entry.mood === undefined ? null : entry.mood,
         imageUrl: entry.imageUrl,
         userId: user.id
     };
 
     let savedEntry;
     if (isNew) {
-        savedEntry = await prisma.journalEntry.create({ data });
+        savedEntry = await prisma.journalEntry.create({ data: {
+            title: data.title,
+            content: data.content,
+            mood: data.mood,
+            imageUrl: data.imageUrl,
+            userId: data.userId
+        } });
     } else {
         savedEntry = await prisma.journalEntry.update({
             where: { id: entry.id },
