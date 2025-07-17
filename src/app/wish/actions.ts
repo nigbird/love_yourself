@@ -2,10 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { PrismaClient } from '@prisma/client';
 import type { Wish } from '@/domain/entities';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export async function getWishes() {
   return prisma.wish.findMany({
