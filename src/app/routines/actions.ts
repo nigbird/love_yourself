@@ -2,9 +2,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/db';
 import { RoutineFrequency } from '@prisma/client';
 import type { Routine } from '@/domain/entities';
-import { prisma } from '@/lib/db';
+
 
 export async function getRoutines() {
   return prisma.routine.findMany({
@@ -16,9 +17,9 @@ export async function getRoutines() {
 
 export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = routine;
-  const userId = 'user@example.com'; // In a real app, this would come from authentication
+  const userId = 'clx14pve80000108u8b53d9ud'; // In a real app, this would come from authentication
 
-  const user = await prisma.user.findUnique({ where: { email: userId } });
+  const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
   if (!user) {
     throw new Error("User not found");
   }
@@ -42,6 +43,7 @@ export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' 
   }
 
   revalidatePath('/routines');
+  revalidatePath('/analytics');
 }
 
 
@@ -50,12 +52,17 @@ export async function deleteRoutine(id: string) {
     where: { id },
   });
   revalidatePath('/routines');
+  revalidatePath('/analytics');
 }
 
 export async function getCompletionStatus() {
+  const userId = 'clx14pve80000108u8b53d9ud';
+  const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
+  if (!user) return {};
+  
   const logs = await prisma.routineCompletionLog.findMany({
     where: {
-      // Filter for logs from today, for example
+        userId: user.id,
     },
   });
 
@@ -66,9 +73,9 @@ export async function getCompletionStatus() {
   return status;
 }
 
-export async function markRoutineAsDone(routineId: string) {
-    const userId = 'user@example.com';
-    const user = await prisma.user.findUnique({ where: { email: userId } });
+export async function markRoutineAsDone(routine: Routine) {
+    const userId = 'clx14pve80000108u8b53d9ud';
+    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
     if (!user) throw new Error("User not found");
 
     const today = new Date();
@@ -76,7 +83,7 @@ export async function markRoutineAsDone(routineId: string) {
 
     const existingLog = await prisma.routineCompletionLog.findFirst({
         where: {
-            routineId: routineId,
+            routineId: routine.id,
             userId: user.id,
             completedAt: {
                 gte: today
@@ -87,11 +94,23 @@ export async function markRoutineAsDone(routineId: string) {
     if (!existingLog) {
         await prisma.routineCompletionLog.create({
             data: {
-                routineId: routineId,
+                routineId: routine.id,
                 userId: user.id,
+                routineName: routine.name,
+                rewardPoints: routine.rewardPoints,
                 completedAt: new Date(),
+            }
+        });
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                rewardPoints: {
+                    increment: routine.rewardPoints,
+                }
             }
         });
     }
   revalidatePath('/routines');
+  revalidatePath('/analytics');
 }

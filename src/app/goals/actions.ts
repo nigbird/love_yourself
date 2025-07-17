@@ -2,9 +2,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/db';
 import { GoalType } from '@prisma/client';
 import type { Goal, MeasurableGoal } from '@/domain/entities';
-import { prisma } from '@/lib/db';
 
 export async function getGoals() {
   return prisma.goal.findMany({
@@ -16,9 +16,9 @@ export async function getGoals() {
 
 export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = goal;
-  const userId = 'user@example.com'; // In a real app, this would come from authentication
+  const userId = 'clx14pve80000108u8b53d9ud'; // In a real app, this would come from authentication
 
-  const user = await prisma.user.findUnique({ where: { email: userId } });
+  const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
   if (!user) {
     throw new Error("User not found");
   }
@@ -45,6 +45,7 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'cre
   }
 
   revalidatePath('/goals');
+  revalidatePath('/analytics');
 }
 
 
@@ -53,11 +54,12 @@ export async function deleteGoal(id: string) {
     where: { id },
   });
   revalidatePath('/goals');
+  revalidatePath('/analytics');
 }
 
 export async function completeGoal(goal: Goal | MeasurableGoal) {
-  const userId = 'user@example.com';
-  const user = await prisma.user.findUnique({ where: { email: userId } });
+  const userId = 'clx14pve80000108u8b53d9ud';
+  const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
   if (!user) {
     throw new Error("User not found");
   }
@@ -94,8 +96,8 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
 }
 
 export async function getCompletedGoals() {
-    const userId = 'user@example.com';
-    const user = await prisma.user.findUnique({ where: { email: userId } });
+    const userId = 'clx14pve80000108u8b53d9ud';
+    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
     if (!user) {
         return [];
     }

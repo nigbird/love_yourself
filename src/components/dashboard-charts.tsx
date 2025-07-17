@@ -1,156 +1,141 @@
 
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  LabelList,
-  Line,
-  LineChart,
-} from "recharts";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, Sector } from "recharts";
 import {
   ChartContainer,
-  ChartTooltip,
+  ChartTooltip as ChartTooltipContainer,
   ChartTooltipContent,
   ChartConfig,
 } from "@/components/ui/chart";
+import { CardDescription } from "./ui/card";
+import { useState, useCallback } from "react";
 
-const goalChartData = [
-  { month: "Jan", completed: 15 },
-  { month: "Feb", completed: 20 },
-  { month: "Mar", completed: 24 },
-  { month: "Apr", completed: 18 },
-  { month: "May", completed: 30 },
-  { month: "Jun", completed: 25 },
-];
+// Goal Status Chart
+type GoalStatusData = {
+    name: string;
+    value: number;
+    fill: string;
+}[];
 
 const goalChartConfig = {
+  value: {
+    label: "Goals",
+  },
   completed: {
     label: "Completed",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-2))",
+  },
+  inProgress: {
+    label: "In Progress",
+    color: "hsl(var(--chart-1))",
+  },
+  overdue: {
+    label: "Overdue",
+    color: "hsl(var(--destructive))",
   },
 } satisfies ChartConfig;
 
-export function GoalCompletionChart() {
+const renderActiveShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
+
   return (
-    <ChartContainer config={goalChartConfig} className="h-[250px] w-full">
-      <BarChart
-        accessibilityLayer
-        data={goalChartData}
-        margin={{ top: 20, right: 0, left: -20, bottom: 5 }}
-      >
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-        />
-        <YAxis
-          tickLine={false}
-          axisLine={false}
-          tickMargin={10}
-        />
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="dot" />}
-        />
-        <Bar dataKey="completed" fill="var(--color-completed)" radius={8}>
-          <LabelList
-            position="top"
-            offset={12}
-            className="fill-foreground"
-            fontSize={12}
-          />
-        </Bar>
-      </BarChart>
-    </ChartContainer>
+    <g>
+      <text x={cx} y={cy - 10} dy={8} textAnchor="middle" fill={fill} className="text-2xl font-bold">
+        {payload.value}
+      </text>
+       <text x={cx} y={cy + 10} dy={8} textAnchor="middle" fill="hsl(var(--muted-foreground))" className="text-sm">
+        {payload.name} ({(percent * 100).toFixed(0)}%)
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 10}
+        fill={fill}
+      />
+    </g>
   );
+};
+
+
+export function GoalStatusChart({ data }: { data: GoalStatusData }) {
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    const onPieEnter = useCallback((_: any, index: number) => {
+        setActiveIndex(index);
+    }, [setActiveIndex]);
+
+    return (
+        <ChartContainer config={goalChartConfig} className="h-64 w-full">
+        <PieChart>
+            <Pie
+                activeIndex={activeIndex}
+                activeShape={renderActiveShape}
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                dataKey="value"
+                onMouseEnter={onPieEnter}
+            >
+            {data.map((entry) => (
+                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+            ))}
+            </Pie>
+        </PieChart>
+        </ChartContainer>
+    );
 }
 
-
-// New Routine Chart
-const routineChartData = {
-  weekly: [
-    { day: "Sun", completed: 5 },
-    { day: "Mon", completed: 8 },
-    { day: "Tue", completed: 6 },
-    { day: "Wed", completed: 7 },
-    { day: "Thu", completed: 9 },
-    { day: "Fri", completed: 4 },
-    { day: "Sat", completed: 6 },
-  ],
-  monthly: [
-    { week: "Week 1", completed: 35 },
-    { week: "Week 2", completed: 42 },
-    { week: "Week 3", completed: 40 },
-    { week: "Week 4", completed: 38 },
-  ],
-  yearly: [
-    { month: "Jan", completed: 150 },
-    { month: "Feb", completed: 160 },
-    { month: "Mar", completed: 155 },
-    { month: "Apr", completed: 170 },
-    { month: "May", completed: 180 },
-    { month: "Jun", completed: 165 },
-  ],
-};
+// Routine Completion Chart
+type RoutineChartData = {
+    date: string;
+    completed: number;
+    missed: number;
+}[];
 
 const routineChartConfig = {
   completed: {
-    label: "Routines Completed",
-    color: "hsl(var(--accent))",
+    label: "Completed",
+    color: "hsl(var(--chart-1))",
+  },
+  missed: {
+    label: "Missed",
+    color: "hsl(var(--destructive))",
   },
 } satisfies ChartConfig;
 
-export function RoutineCompletionChart({ timeRange }: { timeRange: "weekly" | "monthly" | "yearly" }) {
-  const data = routineChartData[timeRange] || routineChartData.monthly;
-  const dataKey = timeRange === 'weekly' ? 'day' : (timeRange === 'monthly' ? 'week' : 'month');
-
+export function RoutineCompletionChart({ data }: { data: RoutineChartData }) {
+  if (!data || data.length === 0) {
+    return <div className="flex items-center justify-center h-64"><CardDescription>No routine data for this period.</CardDescription></div>;
+  }
   return (
-     <ChartContainer config={routineChartConfig} className="h-[250px] w-full">
-        <LineChart
-            accessibilityLayer
-            data={data}
-            margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
-        >
+     <ChartContainer config={routineChartConfig} className="h-64 w-full">
+        <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid vertical={false} />
-            <XAxis
-            dataKey={dataKey}
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
+            <XAxis dataKey="date" tickLine={false} tickMargin={10} axisLine={false} />
+            <YAxis allowDecimals={false} tickLine={false} axisLine={false} tickMargin={10} />
+            <ChartTooltipContainer 
+                cursor={true}
+                content={<ChartTooltipContent indicator="dot" />} 
             />
-            <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={10}
-            />
-            <ChartTooltip
-            cursor={true}
-            content={<ChartTooltipContent indicator="line" />}
-            />
-            <Line
-                dataKey="completed"
-                type="monotone"
-                stroke="var(--color-completed)"
-                strokeWidth={3}
-                dot={{
-                    fill: "var(--color-completed)",
-                    r: 5,
-                }}
-             />
-        </LineChart>
+            <Legend />
+            <Bar dataKey="completed" stackId="a" fill="var(--color-completed)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="missed" stackId="a" fill="var(--color-missed)" radius={[4, 4, 0, 0]} />
+        </BarChart>
     </ChartContainer>
   )
 }
