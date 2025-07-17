@@ -2,10 +2,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { PrismaClient, GoalType } from '@prisma/client';
+import { GoalType } from '@prisma/client';
 import type { Goal, MeasurableGoal } from '@/domain/entities';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export async function getGoals() {
   return prisma.goal.findMany({
@@ -41,16 +40,7 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'cre
     });
   } else {
     await prisma.goal.create({
-      data: {
-          ...goalData,
-          name: goalData.name,
-          type: goalData.type,
-          rewardPoints: goalData.rewardPoints,
-          targetValue: goalData.targetValue,
-          currentValue: goalData.currentValue,
-          unit: goalData.unit,
-          userId: goalData.userId,
-      }
+      data: goalData,
     });
   }
 

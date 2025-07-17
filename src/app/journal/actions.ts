@@ -2,10 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { PrismaClient } from '@prisma/client';
 import type { JournalEntry } from '@/domain/entities';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export async function getJournalEntries() {
   return prisma.journalEntry.findMany({

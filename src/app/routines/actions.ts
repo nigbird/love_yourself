@@ -2,10 +2,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { PrismaClient, RoutineFrequency } from '@prisma/client';
+import { RoutineFrequency } from '@prisma/client';
 import type { Routine } from '@/domain/entities';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db';
 
 export async function getRoutines() {
   return prisma.routine.findMany({
