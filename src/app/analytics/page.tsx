@@ -12,25 +12,33 @@ import { getCompletedGoals } from "../goals/actions";
 import { getFulfilledWishes } from "../wish/actions";
 import type { GoalCompletionLog, WishFulfillmentLog } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Gift } from "lucide-react";
+import { Trophy, Gift, Loader2 } from "lucide-react";
+import { getAnalyticsData } from './actions';
 
+type ChartData = { name: string; completed: number; tooltip: string; }[];
 
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState("monthly");
+  const [timeRange, setTimeRange] = useState<"weekly" | "monthly" | "yearly">("monthly");
   const [completedGoals, setCompletedGoals] = useState<GoalCompletionLog[]>([]);
   const [fulfilledWishes, setFulfilledWishes] = useState<WishFulfillmentLog[]>([]);
+  const [chartData, setChartData] = useState<{ routines: ChartData; goals: ChartData } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
-      const [goals, wishes] = await Promise.all([
+      setIsLoading(true);
+      const [goals, wishes, analytics] = await Promise.all([
         getCompletedGoals(),
-        getFulfilledWishes()
+        getFulfilledWishes(),
+        getAnalyticsData(timeRange)
       ]);
       setCompletedGoals(goals);
       setFulfilledWishes(wishes);
+      setChartData(analytics);
+      setIsLoading(false);
     }
     fetchData();
-  }, []);
+  }, [timeRange]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
@@ -46,31 +54,37 @@ export default function AnalyticsPage() {
 
         <Card className="bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Dashboard</CardTitle>
-            <Select value={timeRange} onValueChange={setTimeRange}>
+            <CardTitle>Completions Dashboard</CardTitle>
+            <Select value={timeRange} onValueChange={(value) => setTimeRange(value as "weekly" | "monthly" | "yearly")}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select time range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                <SelectItem value="weekly">This Week</SelectItem>
+                <SelectItem value="monthly">This Month</SelectItem>
+                <SelectItem value="yearly">This Year</SelectItem>
               </SelectContent>
             </Select>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="routines" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="routines">Routines</TabsTrigger>
-                <TabsTrigger value="goals">Goals</TabsTrigger>
-              </TabsList>
-              <TabsContent value="routines" className="mt-6">
-                 <RoutineCompletionChart timeRange={timeRange} />
-              </TabsContent>
-              <TabsContent value="goals" className="mt-6">
-                <GoalCompletionChart />
-              </TabsContent>
-            </Tabs>
+            {isLoading || !chartData ? (
+                <div className="flex justify-center items-center h-[300px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            ) : (
+                <Tabs defaultValue="routines" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="routines">Routines</TabsTrigger>
+                    <TabsTrigger value="goals">Goals</TabsTrigger>
+                </TabsList>
+                <TabsContent value="routines" className="mt-6">
+                    <RoutineCompletionChart data={chartData.routines} />
+                </TabsContent>
+                <TabsContent value="goals" className="mt-6">
+                    <GoalCompletionChart data={chartData.goals} />
+                </TabsContent>
+                </Tabs>
+            )}
           </CardContent>
         </Card>
         
@@ -138,4 +152,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-
