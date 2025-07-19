@@ -66,7 +66,7 @@ export async function getCompletionStatus() {
   return status;
 }
 
-export async function markRoutineAsDone(routineId: string) {
+export async function markRoutineAsDone(routine: Routine) {
     const userId = 'user@example.com';
     const user = await prisma.user.findUnique({ where: { email: userId } });
     if (!user) throw new Error("User not found");
@@ -76,7 +76,7 @@ export async function markRoutineAsDone(routineId: string) {
 
     const existingLog = await prisma.routineCompletionLog.findFirst({
         where: {
-            routineId: routineId,
+            routineId: routine.id,
             userId: user.id,
             completedAt: {
                 gte: today
@@ -87,11 +87,25 @@ export async function markRoutineAsDone(routineId: string) {
     if (!existingLog) {
         await prisma.routineCompletionLog.create({
             data: {
-                routineId: routineId,
+                routineId: routine.id,
                 userId: user.id,
+                routineName: routine.name,
+                rewardPoints: routine.rewardPoints,
                 completedAt: new Date(),
+            }
+        });
+
+         // Optionally, add reward points to the user
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+            rewardPoints: {
+                increment: routine.rewardPoints
+            }
             }
         });
     }
   revalidatePath('/routines');
+  revalidatePath('/analytics');
 }
+
