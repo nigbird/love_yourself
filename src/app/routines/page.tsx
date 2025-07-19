@@ -95,7 +95,7 @@ export default function RoutinesPage() {
 
   const handleMarkAsDone = async (routine: Routine) => {
     try {
-        await markRoutineAsDone(routine.id);
+        await markRoutineAsDone(routine);
         const today = new Date().toISOString().split('T')[0];
         setCompletionStatus(prev => ({ ...prev, [routine.id]: today }));
         toast({
