@@ -6,7 +6,7 @@ export interface Routine {
   userId: string;
   name: string;
   frequency: RoutineFrequency;
-  daysOfWeek?: number[]; // 0 for Sunday, 6 for Saturday. Only for weekly/custom.
+  daysOfWeek?: number[] | string; // 0 for Sunday, 6 for Saturday. Only for weekly/custom.
   timeOfDay?: string; // e.g., '08:00'
   remindersEnabled: boolean;
   rewardPoints: number;

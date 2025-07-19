@@ -17,7 +17,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from "@/hooks/use-toast";
-import type { Goal, MeasurableGoal } from "@/domain/entities";
+import type { Goal, MeasurableGoal, Goal as GoalEntity } from "@/domain/entities";
 import { CreateGoalForm } from "@/components/goals/create-goal-form";
 import { UpdateGoalProgressForm } from "@/components/goals/update-goal-progress-form";
 import { getGoals, saveGoal, deleteGoal, completeGoal } from './actions';
@@ -54,7 +54,7 @@ export default function GoalsPage() {
     setIsUpdateFormOpen(true);
   }
 
-  const handleFormSubmit = async (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+  const handleFormSubmit = async (data: Omit<GoalEntity, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
     try {
         const goalData = editingGoal ? { ...data, id: editingGoal.id } : data;
         await saveGoal(goalData);
@@ -72,7 +72,7 @@ export default function GoalsPage() {
   };
 
   const handleUpdateProgressSubmit = async (data: { currentValue: number }) => {
-    if (!editingGoal) return;
+    if (!editingGoal || editingGoal.type !== 'personal_measurable') return;
     try {
       const updatedGoalData = {
         ...editingGoal,

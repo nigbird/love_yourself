@@ -15,7 +15,7 @@ import { CreateRoutineForm } from "@/components/routines/create-routine-form";
 import { PlusCircle, Zap, MoreVertical, Edit, Trash2, Home, Star } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Routine } from '@/domain/entities';
+import type { Routine as RoutineEntity } from '@/domain/entities';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -35,6 +35,8 @@ type CompletionStatus = {
     [routineId: string]: string; // Store date string 'YYYY-MM-DD'
 };
 
+type Routine = Omit<RoutineEntity, 'daysOfWeek'> & { daysOfWeek: number[] };
+
 export default function RoutinesPage() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
@@ -49,7 +51,7 @@ export default function RoutinesPage() {
             getRoutines(),
             getCompletionStatus()
         ]);
-        setRoutines(dbRoutines);
+        setRoutines(dbRoutines as Routine[]);
         setCompletionStatus(dbStatus);
     }
     fetchData();
@@ -65,13 +67,13 @@ export default function RoutinesPage() {
     setIsFormOpen(true);
   }
 
-  const handleFormSubmit = async (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+  const handleFormSubmit = async (data: Omit<RoutineEntity, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'daysOfWeek'> & { id?: string; daysOfWeek?: number[] }) => {
     try {
         const routineData = editingRoutine ? { ...data, id: editingRoutine.id } : data;
         await saveRoutine(routineData);
 
         const updatedRoutines = await getRoutines();
-        setRoutines(updatedRoutines);
+        setRoutines(updatedRoutines as Routine[]);
         
         toast({ title: editingRoutine ? "Routine Updated!" : "Routine Created!", description: `"${data.name}" has been saved.` });
         setIsFormOpen(false);

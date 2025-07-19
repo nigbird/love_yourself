@@ -1,3 +1,4 @@
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -27,98 +28,92 @@ model User {
 }
 
 model Routine {
-  id               String                 @id @default(cuid())
+  id               String   @id @default(cuid())
   userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name             String
-  frequency        RoutineFrequency
-  daysOfWeek       Int[]
+  frequency        String // Was RoutineFrequency
+  daysOfWeek       String? // Stored as comma-separated string
   timeOfDay        String?
-  remindersEnabled Boolean                @default(true)
+  remindersEnabled Boolean  @default(true)
   rewardPoints     Int
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   completionLogs   RoutineCompletionLog[]
 }
 
-model Goal {
-  id           String    @id @default(cuid())
+model RoutineCompletionLog {
+  id           String   @id @default(cuid())
+  routineId    String
+  routine      Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
   userId       String
-  name         String
-  type         GoalType
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineName  String
   rewardPoints Int
+  completedAt  DateTime
+}
+
+model Goal {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  type         String // Was GoalType
+  rewardPoints Int
+  startDate    DateTime?
+  endDate      DateTime?
   targetValue  Float?
   currentValue Float?
   unit         String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  completionLogs GoalCompletionLog[]
+}
+
+model GoalCompletionLog {
+  id           String   @id @default(cuid())
+  goalId       String
+  goal         Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalName     String
+  goalType     String
+  rewardPoints Int
+  completedAt  DateTime
 }
 
 model JournalEntry {
   id        String   @id @default(cuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
   imageUrl  String?
   mood      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Wish {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  note      String?
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model RoutineCompletionLog {
-  id            String   @id @default(cuid())
-  routineId     String
-  userId        String
-  routineName   String
-  rewardPoints  Int
-  completedAt   DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  routine       Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
-}
-
-model GoalCompletionLog {
-  id           String   @id @default(cuid())
-  goalId       String
-  userId       String
-  goalName     String
-  goalType     GoalType
-  rewardPoints Int
-  completedAt  DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  note        String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  fulfillment WishFulfillmentLog[]
 }
 
 model WishFulfillmentLog {
   id          String   @id @default(cuid())
   wishId      String
+  wish        Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
   userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   wishTitle   String
   wishNote    String?
   imageUrl    String?
-  fulfilledAt DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum RoutineFrequency {
-  daily
-  weekly
-  monthly
-  custom
-}
-
-enum GoalType {
-  personal_measurable
-  spiritual
+  fulfilledAt DateTime
 }

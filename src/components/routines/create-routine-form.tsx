@@ -63,7 +63,7 @@ export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRou
       reset({
         name: routineToEdit.name,
         frequency: routineToEdit.frequency,
-        daysOfWeek: routineToEdit.daysOfWeek || [],
+        daysOfWeek: (routineToEdit.daysOfWeek as number[]) || [],
         timeOfDay: routineToEdit.timeOfDay || '08:00',
         rewardPoints: routineToEdit.rewardPoints,
         remindersEnabled: routineToEdit.remindersEnabled,

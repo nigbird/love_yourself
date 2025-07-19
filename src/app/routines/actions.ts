@@ -2,19 +2,24 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { RoutineFrequency } from '@prisma/client';
 import type { Routine } from '@/domain/entities';
 import { prisma } from '@/lib/db';
 
 export async function getRoutines() {
-  return prisma.routine.findMany({
+  const routinesFromDb = await prisma.routine.findMany({
     orderBy: {
       createdAt: 'desc',
     },
   });
+
+  // Parse daysOfWeek from string to number array
+  return routinesFromDb.map(r => ({
+      ...r,
+      daysOfWeek: r.daysOfWeek ? r.daysOfWeek.split(',').map(Number) : [],
+  }));
 }
 
-export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
+export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' | 'updatedAt' | 'daysOfWeek'> & { id?: string; daysOfWeek?: number[] }) {
   const { id, ...data } = routine;
   const userId = 'user@example.com'; // In a real app, this would come from authentication
 
@@ -25,7 +30,7 @@ export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' 
 
   const routineData = {
     ...data,
-    frequency: data.frequency as RoutineFrequency, // Explicitly cast the string to the enum type
+    daysOfWeek: data.daysOfWeek ? data.daysOfWeek.join(',') : '',
     rewardPoints: Number(data.rewardPoints),
     userId: user.id,
   };
@@ -108,6 +113,3 @@ export async function markRoutineAsDone(routine: Routine) {
   revalidatePath('/routines');
   revalidatePath('/analytics');
 }
-
-
-

@@ -1,3 +1,4 @@
+
 export type GoalType = 'personal_measurable' | 'spiritual';
 
 export interface Goal {
@@ -12,11 +13,11 @@ export interface Goal {
 
 export interface MeasurableGoal extends Goal {
   type: 'personal_measurable';
-  startDate: Date;
-  endDate: Date;
-  targetValue: number;
-  currentValue: number;
-  unit: string; // e.g., 'kg', 'pages', 'minutes'
+  startDate: Date | null;
+  endDate: Date | null;
+  targetValue: number | null;
+  currentValue: number | null;
+  unit: string | null; // e.g., 'kg', 'pages', 'minutes'
 }
 
 export interface SpiritualGoal extends Goal {

@@ -2,16 +2,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { GoalType } from '@prisma/client';
 import type { Goal, MeasurableGoal } from '@/domain/entities';
 import { prisma } from '@/lib/db';
 
 export async function getGoals() {
-  return prisma.goal.findMany({
+  const goalsFromDb = await prisma.goal.findMany({
     orderBy: {
       createdAt: 'desc',
     },
   });
+  return goalsFromDb;
 }
 
 export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
@@ -25,7 +25,6 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'cre
   
   const goalData = {
     ...data,
-    type: data.type as GoalType,
     rewardPoints: Number(data.rewardPoints),
     targetValue: data.type === 'personal_measurable' ? Number(data.targetValue) : null,
     currentValue: data.type === 'personal_measurable' ? Number(data.currentValue) : null,
@@ -68,7 +67,7 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
       goalId: goal.id,
       userId: user.id,
       goalName: goal.name,
-      goalType: goal.type as GoalType,
+      goalType: goal.type,
       rewardPoints: goal.rewardPoints,
       completedAt: new Date(),
     }

@@ -60,9 +60,9 @@ export function CreateGoalForm({ onGoalSubmitted, goalToEdit }: CreateGoalFormPr
         name: goalToEdit.name,
         type: goalToEdit.type,
         rewardPoints: goalToEdit.rewardPoints,
-        targetValue: 'targetValue' in goalToEdit ? goalToEdit.targetValue : 0,
-        currentValue: 'currentValue' in goalToEdit ? goalToEdit.currentValue : 0,
-        unit: 'unit' in goalToEdit ? goalToEdit.unit : '',
+        targetValue: 'targetValue' in goalToEdit ? goalToEdit.targetValue || 0 : 0,
+        currentValue: 'currentValue' in goalToEdit ? goalToEdit.currentValue || 0 : 0,
+        unit: 'unit' in goalToEdit ? goalToEdit.unit || '' : '',
       });
     } else {
       reset({
