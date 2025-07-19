@@ -54,7 +54,7 @@ export const getAnalyticsData = async (timeRange: TimeRange) => {
     ]);
 
     const formatRoutineData = () => {
-        let data: { name: string; completed: number; tooltip: string[] }[] = [];
+        let data: { name: string; completed: number; tooltip: string[] }[] | { name: string; completed: number; tooltip: string[], start: Date, end: Date }[] = [];
         if (timeRange === 'weekly') {
             const days = eachDayOfInterval({ start: startDate, end: endDate });
             data = days.map(day => ({
@@ -65,8 +65,8 @@ export const getAnalyticsData = async (timeRange: TimeRange) => {
             routineLogs.forEach(log => {
                 const dayIndex = data.findIndex(d => d.name === format(log.completedAt, 'EEE'));
                 if (dayIndex !== -1) {
-                    data[dayIndex].completed++;
-                    data[dayIndex].tooltip.push(`${log.routineName} (+${log.rewardPoints}pts)`);
+                    (data[dayIndex] as any).completed++;
+                    (data[dayIndex] as any).tooltip.push(`${log.routineName} (+${log.rewardPoints}pts)`);
                 }
             });
         } else if (timeRange === 'monthly') {
@@ -79,10 +79,10 @@ export const getAnalyticsData = async (timeRange: TimeRange) => {
                 end: endOfWeek(week, { weekStartsOn: 1 })
             }));
              routineLogs.forEach(log => {
-                const weekIndex = data.findIndex(w => log.completedAt >= w.start && log.completedAt <= w.end);
+                const weekIndex = (data as {start: Date, end: Date}[]).findIndex(w => log.completedAt >= w.start && log.completedAt <= w.end);
                 if (weekIndex !== -1) {
-                    data[weekIndex].completed++;
-                    data[weekIndex].tooltip.push(`${log.routineName} (+${log.rewardPoints}pts) on ${format(log.completedAt, 'MMM d')}`);
+                    (data[weekIndex] as any).completed++;
+                    (data[weekIndex] as any).tooltip.push(`${log.routineName} (+${log.rewardPoints}pts) on ${format(log.completedAt, 'MMM d')}`);
                 }
             });
         } else { // yearly
@@ -95,8 +95,8 @@ export const getAnalyticsData = async (timeRange: TimeRange) => {
             routineLogs.forEach(log => {
                 const monthIndex = data.findIndex(m => m.name === format(log.completedAt, 'MMM'));
                 if (monthIndex !== -1) {
-                    data[monthIndex].completed++;
-                     data[monthIndex].tooltip.push(`${log.routineName} (+${log.rewardPoints}pts)`);
+                    (data[monthIndex] as any).completed++;
+                    (data[monthIndex] as any).tooltip.push(`${log.routineName} (+${log.rewardPoints}pts)`);
                 }
             });
         }
