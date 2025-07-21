@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Alegreya } from "next/font/google";
 import { AppLayout } from "@/components/layout/app-layout";
+import { ReminderProvider } from "@/components/reminders/reminder-provider";
 
 export const metadata: Metadata = {
   title: "Bloom Daily",
@@ -35,9 +36,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AppLayout>
-          {children}
-        </AppLayout>
+        <ReminderProvider>
+          <AppLayout>
+            {children}
+          </AppLayout>
+        </ReminderProvider>
         <Toaster />
       </body>
     </html>
