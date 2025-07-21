@@ -1,55 +1,59 @@
-generator client {
-  provider = "prisma-client-js"
-}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
-  name               String?
-  rewardPoints       Int                  @default(0)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  routines           Routine[]
-  goals              Goal[]
-  journalEntries     JournalEntry[]
-  wishes             Wish[]
-  routineCompletions RoutineCompletionLog[]
-  goalCompletions    GoalCompletionLog[]
-  wishFulfillments   WishFulfillmentLog[]
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String                 @unique
+  rewardPoints          Int                    @default(0)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  routines              Routine[]
+  goals                 Goal[]
+  journalEntries        JournalEntry[]
+  wishes                Wish[]
+  routineLogs           RoutineCompletionLog[]
+  goalLogs              GoalCompletionLog[]
+  wishFulfillments      WishFulfillmentLog[]
+  redeemableRewards     RedeemableReward[]
+  rewardRedemptions     RewardRedemptionLog[]
 }
 
 model Routine {
-  id                 String               @id @default(cuid())
-  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId             String
-  name               String
-  frequency          String
-  daysOfWeek         String?
-  timeOfDay          String?
-  remindersEnabled   Boolean              @default(true)
-  rewardPoints       Int
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  completionLogs     RoutineCompletionLog[]
+  id                String                 @id @default(cuid())
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  name              String
+  frequency         RoutineFrequency
+  daysOfWeek        Int[]
+  timeOfDay         String?
+  remindersEnabled  Boolean                @default(true)
+  rewardPoints      Int
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  completionLogs    RoutineCompletionLog[]
 }
 
 model Goal {
-  id           String    @id @default(cuid())
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  name         String
-  type         String
-  targetValue  Float?
-  currentValue Float?
-  unit         String?
-  rewardPoints Int
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String         @id @default(cuid())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  name          String
+  type          GoalType
+  targetValue   Float?
+  currentValue  Float?
+  unit          String?
+  rewardPoints  Int
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  completionLogs GoalCompletionLog[]
 }
 
 model JournalEntry {
@@ -65,17 +69,17 @@ model JournalEntry {
 }
 
 model Wish {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  title     String
-  note      String?
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String               @id @default(cuid())
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  title        String
+  note         String?
+  imageUrl     String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  fulfillment  WishFulfillmentLog[]
 }
 
-// Logging tables
 model RoutineCompletionLog {
   id           String   @id @default(cuid())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -91,9 +95,10 @@ model GoalCompletionLog {
   id           String   @id @default(cuid())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String
+  goal         Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
   goalId       String
   goalName     String
-  goalType     String
+  goalType     GoalType
   rewardPoints Int
   completedAt  DateTime @default(now())
 }
@@ -102,9 +107,47 @@ model WishFulfillmentLog {
   id          String   @id @default(cuid())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
+  wish        Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
   wishId      String
   wishTitle   String
   wishNote    String?
   imageUrl    String?
   fulfilledAt DateTime @default(now())
+}
+
+model RedeemableReward {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  title       String
+  description String?
+  cost        Int
+  isEnabled   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  redemptions RewardRedemptionLog[]
+}
+
+model RewardRedemptionLog {
+    id              String          @id @default(cuid())
+    user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId          String
+    reward          RedeemableReward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+    rewardId        String
+    rewardTitle     String
+    pointsSpent     Int
+    redeemedAt      DateTime        @default(now())
+}
+
+
+enum RoutineFrequency {
+  daily
+  weekly
+  monthly
+  custom
+}
+
+enum GoalType {
+  personal_measurable
+  spiritual
 }

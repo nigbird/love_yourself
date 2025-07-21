@@ -1,0 +1,82 @@
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
+export default function SettingsPage() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+      <div className="w-full max-w-2xl space-y-8">
+        <div className="space-y-4 text-center">
+          <h1 className="text-3xl font-headline font-bold text-primary">
+            Settings
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your application preferences.
+          </p>
+        </div>
+
+        <Card className="bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>
+              Configure how you receive reminders and alerts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="sound-notifications" className="text-base">
+                  Sound Notifications
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Play a sound when a reminder notification appears.
+                </p>
+              </div>
+              <Switch
+                id="sound-notifications"
+                aria-label="Toggle sound notifications"
+              />
+            </div>
+             <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="email-notifications" className="text-base">
+                  Email Notifications
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive weekly progress summary via email. (Coming soon)
+                </p>
+              </div>
+              <Switch
+                id="email-notifications"
+                aria-label="Toggle email notifications"
+                disabled
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+         <Card className="bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+            <CardDescription>
+              Manage your account settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             <div className="flex items-center justify-between rounded-lg border p-4">
+                <p>Log out of your account</p>
+                <button className="text-destructive font-semibold">Log out</button>
+             </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

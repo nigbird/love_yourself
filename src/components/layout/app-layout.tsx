@@ -1,19 +1,90 @@
+
+'use client';
+
 import type { ReactNode } from "react";
-import { HeartHandshake } from 'lucide-react';
+import { HeartHandshake, Bell, Star, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getUserRewardPoints } from "@/app/user/actions";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const [points, setPoints] = useState(0);
+  const { toast } = useToast();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    async function fetchPoints() {
+      try {
+        const userPoints = await getUserRewardPoints();
+        setPoints(userPoints);
+      } catch (error) {
+        console.error("Failed to fetch reward points", error);
+        toast({
+          title: "Could not load points",
+          variant: "destructive"
+        })
+      }
+    }
+    fetchPoints();
+  }, [pathname, toast]); // Refetch when path changes
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 max-w-screen-2xl items-center">
-          <a href="/" className="flex items-center space-x-2">
+          <a href="/" className="flex items-center space-x-2 mr-6">
             <HeartHandshake className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg font-headline text-primary">Love Yourself</span>
           </a>
+          <div className="flex-grow"></div>
+          <nav className="flex items-center gap-4">
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Link href="/rewards" className="relative text-muted-foreground hover:text-primary transition-colors">
+                            <Star />
+                            <Badge variant="secondary" className="absolute -top-2 -right-3 px-2 py-0.5 text-xs">{points}</Badge>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Reward Points</p>
+                    </TooltipContent>
+                </Tooltip>
+             </TooltipProvider>
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button className="text-muted-foreground hover:text-primary transition-colors">
+                            <Bell />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Notifications (coming soon)</p>
+                    </TooltipContent>
+                </Tooltip>
+             </TooltipProvider>
+             <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Link href="/settings" className="text-muted-foreground hover:text-primary transition-colors">
+                            <Settings />
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Settings</p>
+                    </TooltipContent>
+                </Tooltip>
+             </TooltipProvider>
+          </nav>
         </div>
       </header>
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
