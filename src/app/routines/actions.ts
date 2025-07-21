@@ -2,21 +2,27 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { RoutineFrequency } from '@prisma/client';
 import type { Routine } from '@/domain/entities';
 import { prisma } from '@/lib/db';
 
 export async function getRoutines() {
-  return prisma.routine.findMany({
+  const routines = await prisma.routine.findMany({
     orderBy: {
       createdAt: 'desc',
     },
   });
+
+  return routines.map(routine => ({
+      ...routine,
+      daysOfWeek: typeof routine.daysOfWeek === 'string' 
+          ? routine.daysOfWeek.split(',').map(Number) 
+          : [],
+  }));
 }
 
 export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = routine;
-  const userId = 'user@example.com'; // In a real app, this would come from authentication
+  const userId = 'user@example.com'; 
 
   const user = await prisma.user.findUnique({ where: { email: userId } });
   if (!user) {
@@ -25,7 +31,7 @@ export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' 
 
   const routineData = {
     ...data,
-    frequency: data.frequency as RoutineFrequency, // Explicitly cast the string to the enum type
+    daysOfWeek: data.daysOfWeek?.join(',') || '',
     rewardPoints: Number(data.rewardPoints),
     userId: user.id,
   };
@@ -55,7 +61,7 @@ export async function deleteRoutine(id: string) {
 export async function getCompletionStatus() {
   const logs = await prisma.routineCompletionLog.findMany({
     where: {
-      // Filter for logs from today, for example
+      // For simplicity, fetching all logs. In a real app, you might filter by date.
     },
   });
 
@@ -66,7 +72,7 @@ export async function getCompletionStatus() {
   return status;
 }
 
-export async function markRoutineAsDone(routineId: string) {
+export async function markRoutineAsDone(routine: Routine) {
     const userId = 'user@example.com';
     const user = await prisma.user.findUnique({ where: { email: userId } });
     if (!user) throw new Error("User not found");
@@ -76,7 +82,7 @@ export async function markRoutineAsDone(routineId: string) {
 
     const existingLog = await prisma.routineCompletionLog.findFirst({
         where: {
-            routineId: routineId,
+            routineId: routine.id,
             userId: user.id,
             completedAt: {
                 gte: today
@@ -87,11 +93,24 @@ export async function markRoutineAsDone(routineId: string) {
     if (!existingLog) {
         await prisma.routineCompletionLog.create({
             data: {
-                routineId: routineId,
+                routineId: routine.id,
                 userId: user.id,
+                routineName: routine.name,
+                rewardPoints: routine.rewardPoints,
                 completedAt: new Date(),
+            }
+        });
+
+         // Add reward points to the user
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                rewardPoints: {
+                    increment: routine.rewardPoints
+                }
             }
         });
     }
   revalidatePath('/routines');
+  revalidatePath('/analytics');
 }
