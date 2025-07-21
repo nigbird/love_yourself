@@ -12,14 +12,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CreateRoutineForm } from "@/components/routines/create-routine-form";
-import { PlusCircle, Zap, MoreVertical, Edit, Trash2, Home, Star } from 'lucide-react';
+import { PlusCircle, Zap, MoreVertical, Edit, Trash2, Home, Star, Undo2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Routine } from '@/domain/entities';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { getRoutines, saveRoutine, deleteRoutine, markRoutineAsDone, getCompletionStatus } from './actions';
+import { getRoutines, saveRoutine, deleteRoutine, markRoutineAsDone, getCompletionStatus, undoCompletion } from './actions';
 
 const weekDays = [
     { label: 'S', value: '0' },
@@ -108,6 +108,24 @@ export default function RoutinesPage() {
     }
   }
 
+  const handleUndoCompletion = async (routine: Routine) => {
+    try {
+      await undoCompletion(routine.id);
+      setCompletionStatus(prev => {
+        const newStatus = { ...prev };
+        delete newStatus[routine.id];
+        return newStatus;
+      });
+       toast({
+          title: "Completion Undone",
+          description: `The completion for "${routine.name}" has been removed.`,
+        });
+    } catch (error) {
+      console.error("Failed to undo completion:", error);
+      toast({ title: "Error", description: "Could not undo the completion.", variant: "destructive" });
+    }
+  }
+
   const isCompletedToday = (routineId: string) => {
     const today = new Date().toISOString().split('T')[0];
     return completionStatus[routineId] === today;
@@ -116,12 +134,14 @@ export default function RoutinesPage() {
   const today = new Date().toISOString().split('T')[0];
   const completedTodayRoutines = routines.filter(r => completionStatus[r.id] === today);
   const totalPoints = completedTodayRoutines.reduce((sum, r) => sum + r.rewardPoints, 0);
+  const findRoutineById = (id: string) => routines.find(r => r.id === id);
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
       <div className="w-full max-w-5xl space-y-8">
         <div className="space-y-4 text-center">
-          <h1 className="text-3xl font-headline font-bold text-primary">Self-Care Routines</h1>
+          <h1 className="text-3xl font-headline font-bold text-primary">My Routines</h1>
           <p className="text-muted-foreground">
             Plan, track, and build healthy habits for a blooming life.
           </p>
@@ -157,12 +177,17 @@ export default function RoutinesPage() {
                 <CardContent className="text-center">
                     <p className="text-4xl font-bold text-accent">{totalPoints}</p>
                     <CardDescription>Total points earned today.</CardDescription>
-                     <div className="mt-4 space-y-2 text-sm">
+                     <div className="mt-4 space-y-2 text-sm max-h-40 overflow-y-auto pr-2">
                         {completedTodayRoutines.length > 0 ? (
                             completedTodayRoutines.map(r => (
                                 <div key={r.id} className="flex justify-between items-center bg-background/50 p-2 rounded-md">
-                                    <span className="text-foreground/80">{r.name}</span>
-                                    <span className="font-bold text-accent">+{r.rewardPoints}pts</span>
+                                    <span className="text-foreground/80 truncate pr-2">{r.name}</span>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      <span className="font-bold text-accent">+{r.rewardPoints}pts</span>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleUndoCompletion(r)}>
+                                        <Undo2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                 </div>
                             ))
                         ) : (

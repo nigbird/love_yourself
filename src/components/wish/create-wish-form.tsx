@@ -74,7 +74,7 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setValue('imageUrl', reader.result as string);
+        setValue('imageUrl', reader.result as string, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -89,16 +89,12 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="imageUrl">Image</Label>
-        <div className="flex gap-2">
-          <Input id="imageUrl" {...register('imageUrl')} placeholder="Paste image URL..." className="text-base" />
-          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <ImageUp className="mr-2" /> Upload
-          </Button>
-          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-        </div>
-        {errors.imageUrl && <p className="text-destructive text-sm">{errors.imageUrl.message}</p>}
-        {imageUrl && <img src={imageUrl} alt="Preview" className="mt-2 rounded-md max-h-40 w-auto" />}
+        <Label>Image</Label>
+        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
+            <ImageUp className="mr-2" /> Upload Image
+        </Button>
+        <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+        {imageUrl && <img src={imageUrl} alt="Preview" className="mt-2 rounded-md max-h-40 w-auto mx-auto" />}
       </div>
       
       <div className="space-y-2">

@@ -114,3 +114,42 @@ export async function markRoutineAsDone(routine: Routine) {
   revalidatePath('/routines');
   revalidatePath('/analytics');
 }
+
+export async function undoCompletion(routineId: string) {
+    const userId = 'user@example.com';
+    const user = await prisma.user.findUnique({ where: { email: userId } });
+    if (!user) throw new Error("User not found");
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const logToDelete = await prisma.routineCompletionLog.findFirst({
+        where: {
+            routineId: routineId,
+            userId: user.id,
+            completedAt: {
+                gte: today
+            }
+        }
+    });
+    
+    if (logToDelete) {
+        // Decrease user's points
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                rewardPoints: {
+                    decrement: logToDelete.rewardPoints
+                }
+            }
+        });
+
+        // Delete the log
+        await prisma.routineCompletionLog.delete({
+            where: { id: logToDelete.id }
+        });
+
+        revalidatePath('/routines');
+        revalidatePath('/analytics');
+    }
+}
