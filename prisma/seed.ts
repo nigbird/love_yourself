@@ -3,7 +3,7 @@
 // set up a schema.prisma file, and a database to use this.
 // The current application uses localStorage, so this file is for future extension.
 
-import { PrismaClient, RoutineFrequency } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -26,7 +26,7 @@ async function main() {
   const routines = [
     {
         name: 'Hair Wash Day',
-        frequency: RoutineFrequency.weekly,
+        frequency: "weekly",
         daysOfWeek: [0, 3], // Sunday, Wednesday
         timeOfDay: '20:00',
         rewardPoints: 20,
@@ -35,7 +35,7 @@ async function main() {
     },
     {
         name: 'Meal Prep',
-        frequency: RoutineFrequency.weekly,
+        frequency: "weekly",
         daysOfWeek: [0], // Sunday
         timeOfDay: '16:00',
         rewardPoints: 50,
@@ -44,7 +44,7 @@ async function main() {
     },
     {
         name: 'Daily Gratitude',
-        frequency: RoutineFrequency.daily,
+        frequency: "daily",
         timeOfDay: '08:00',
         rewardPoints: 10,
         remindersEnabled: true,
@@ -62,7 +62,10 @@ async function main() {
 
       if (!existingRoutine) {
           const routine = await prisma.routine.create({
-              data: routineData,
+              data: {
+                ...routineData,
+                daysOfWeek: routineData.daysOfWeek?.join(','),
+              },
           });
           console.log(`Created routine with id: ${routine.id}`);
       } else {
@@ -84,6 +87,9 @@ async function main() {
     {
       name: "Read the Book of John",
       type: "spiritual",
+      targetValue: null,
+      currentValue: null,
+      unit: null,
       rewardPoints: 100,
       userId: user.id,
     },
