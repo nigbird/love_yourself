@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Star, ShoppingCart, Trash2, Edit } from 'lucide-react';
+import { PlusCircle, Star, ShoppingCart, Trash2, Edit, MoreVertical } from 'lucide-react';
 import { getPointsHistory, getRedeemableRewards, saveReward, redeemReward, deleteReward } from './actions';
 import type { RedeemableReward } from '@prisma/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import CreateRewardForm from '@/components/rewards/create-reward-form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 type PointsHistory = {
@@ -219,4 +221,3 @@ export default function RewardsPage() {
     </div>
   );
 }
-
