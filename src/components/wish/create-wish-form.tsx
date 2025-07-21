@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import type { Wish } from '@/domain/entities';
 import { useEffect, useRef } from 'react';
 import { ImageUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.'),
@@ -37,6 +38,7 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageUrl = watch('imageUrl');
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -62,6 +64,14 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+          toast({
+              title: "Image Too Large",
+              description: "Image size cannot exceed 2MB.",
+              variant: "destructive"
+          });
+          return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setValue('imageUrl', reader.result as string);
