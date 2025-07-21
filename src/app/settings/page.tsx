@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Card,
   CardContent,
@@ -8,8 +10,11 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useSettings } from "@/hooks/use-settings";
 
 export default function SettingsPage() {
+    const { soundEnabled, setSoundEnabled } = useSettings();
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
       <div className="w-full max-w-2xl space-y-8">
@@ -42,6 +47,8 @@ export default function SettingsPage() {
               <Switch
                 id="sound-notifications"
                 aria-label="Toggle sound notifications"
+                checked={soundEnabled}
+                onCheckedChange={setSoundEnabled}
               />
             </div>
              <div className="flex items-center justify-between rounded-lg border p-4">

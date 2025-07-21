@@ -1,11 +1,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getRoutines, getCompletionStatus } from '@/app/routines/actions';
 import type { Routine } from '@/domain/entities';
 import { BellRing } from 'lucide-react';
+import { useSettings } from '@/hooks/use-settings';
 
 type CompletionStatus = {
     [routineId: string]: string; // Store date string 'YYYY-MM-DD'
@@ -13,11 +14,18 @@ type CompletionStatus = {
 
 export function ReminderProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
+  const { soundEnabled } = useSettings();
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [completionStatus, setCompletionStatus] = useState<CompletionStatus>({});
   const [remindersSent, setRemindersSent] = useState<Set<string>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // We need to create the audio element in the browser
+    if (typeof window !== 'undefined') {
+        audioRef.current = new Audio('/notification.mp3');
+    }
+
     async function fetchData() {
       const [dbRoutines, dbStatus] = await Promise.all([
         getRoutines(),
@@ -28,6 +36,15 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
     }
     fetchData();
   }, []);
+
+  const playNotificationSound = () => {
+    if (soundEnabled && audioRef.current) {
+        audioRef.current.play().catch(error => {
+            console.error("Audio play failed:", error);
+            // This can happen if the user hasn't interacted with the page yet.
+        });
+    }
+  }
 
   useEffect(() => {
     const checkReminders = () => {
@@ -59,6 +76,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
             variant: 'info',
             action: <BellRing className="text-blue-400" />,
           });
+          playNotificationSound();
           setRemindersSent(prev => new Set(prev).add(reminderId));
         }
       });
@@ -79,7 +97,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
         clearInterval(intervalId)
         clearInterval(dailyResetInterval);
     };
-  }, [routines, completionStatus, toast, remindersSent]);
+  }, [routines, completionStatus, toast, remindersSent, soundEnabled]);
 
   return <>{children}</>;
 }
