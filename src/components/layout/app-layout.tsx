@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getUserRewardPoints } from "@/app/user/actions";
 import { NotificationCenter } from "../notifications/notification-center";
+import { BackButton } from "./back-button";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,6 +21,7 @@ export async function AppLayout({ children }: AppLayoutProps) {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 max-w-screen-2xl items-center">
+          <BackButton />
           <a href="/" className="flex items-center space-x-2 mr-6">
             <HeartHandshake className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg font-headline text-primary">Bloom Daily</span>
