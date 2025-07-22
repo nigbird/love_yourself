@@ -2,7 +2,7 @@
 'use server';
 
 import type { ReactNode } from "react";
-import { HeartHandshake, Star, Settings } from 'lucide-react';
+import { HeartHandshake, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,19 +41,6 @@ export async function AppLayout({ children }: AppLayoutProps) {
              </TooltipProvider>
 
              <NotificationCenter />
-             
-             <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Link href="/settings" className="text-muted-foreground hover:text-primary transition-colors">
-                            <Settings />
-                        </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Settings</p>
-                    </TooltipContent>
-                </Tooltip>
-             </TooltipProvider>
           </nav>
         </div>
       </header>

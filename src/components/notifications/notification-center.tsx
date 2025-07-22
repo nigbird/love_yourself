@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { getUnreadNotifications, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import type { Notification } from '@prisma/client';
 import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,16 +49,26 @@ export function NotificationCenter() {
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary">
-          <Bell />
-          {count > 0 && (
-            <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-              {count}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <button className="relative text-muted-foreground hover:text-primary transition-colors">
+                <Bell />
+                {count > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {count}
+                  </Badge>
+                )}
+              </button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Notifications</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
       <PopoverContent className="w-80 p-0" align="end">
         <div className="p-4">
           <div className="flex justify-between items-center">
