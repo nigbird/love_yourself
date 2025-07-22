@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Alegreya } from "next/font/google";
-import { AppLayout } from "@/components/layout/app-layout";
 import { ReminderProvider } from "@/components/reminders/reminder-provider";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { AppClientLayout } from "@/components/layout/app-client-layout";
 
 export const metadata: Metadata = {
   title: "Bloom Daily",
@@ -42,9 +42,9 @@ export default function RootLayout({
         <AuthProvider>
           <SettingsProvider>
             <ReminderProvider>
-              <AppLayout>
+              <AppClientLayout>
                 {children}
-              </AppLayout>
+              </AppClientLayout>
             </ReminderProvider>
           </SettingsProvider>
         </AuthProvider>

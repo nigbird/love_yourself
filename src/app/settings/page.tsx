@@ -12,9 +12,28 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { PageLayout } from "@/components/layout/page-layout";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const { soundEnabled, setSoundEnabled } = useSettings();
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+      try {
+        await signOut(auth);
+        toast({ title: 'Logged out successfully.' });
+        router.push('/login');
+      } catch (error) {
+        console.error("Error signing out: ", error);
+        toast({ title: 'Logout Failed', description: 'Could not log you out.', variant: 'destructive' });
+      }
+    };
+
 
   return (
     <PageLayout>
@@ -80,7 +99,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
              <div className="flex items-center justify-between rounded-lg border p-4">
                 <p>Log out of your account</p>
-                <button className="text-destructive font-semibold">Log out</button>
+                <Button variant="destructive" onClick={handleLogout}>Log out</Button>
              </div>
           </CardContent>
         </Card>
