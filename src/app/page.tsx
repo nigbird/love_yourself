@@ -87,7 +87,7 @@ export default function HomePage() {
         <Carousel
           opts={{
             align: 'start',
-            loop: false,
+            loop: true,
           }}
           className="w-full"
         >
