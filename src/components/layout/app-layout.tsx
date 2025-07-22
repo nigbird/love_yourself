@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getUserRewardPoints } from "@/app/user/actions";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationCenter } from "../notifications/notification-center";
 
@@ -21,21 +21,27 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const pathname = usePathname();
 
-  useEffect(() => {
-    async function fetchPoints() {
-      try {
-        const userPoints = await getUserRewardPoints();
-        setPoints(userPoints);
-      } catch (error) {
-        console.error("Failed to fetch reward points", error);
-        toast({
-          title: "Could not load points",
-          variant: "destructive"
-        })
-      }
+  const fetchPoints = useCallback(async () => {
+    try {
+      const userPoints = await getUserRewardPoints();
+      setPoints(userPoints);
+    } catch (error) {
+      console.error("Failed to fetch reward points", error);
+      // We can silence the toast here to avoid bothering the user on every interval failure
+      // toast({
+      //   title: "Could not load points",
+      //   variant: "destructive"
+      // })
     }
-    fetchPoints();
-  }, [pathname, toast]); // Refetch when path changes
+  }, []);
+
+  useEffect(() => {
+    fetchPoints(); // Fetch points on initial load and path change
+
+    const intervalId = setInterval(fetchPoints, 30000); // Refetch every 30 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, [pathname, fetchPoints]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -43,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <a href="/" className="flex items-center space-x-2 mr-6">
             <HeartHandshake className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg font-headline text-primary">Love Yourself</span>
+            <span className="font-bold text-lg font-headline text-primary">Bloom Daily</span>
           </a>
           <div className="flex-grow"></div>
           <nav className="flex items-center gap-6">
