@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getRoutines, getCompletionStatus } from '@/app/routines/actions';
 import type { Routine } from '@/domain/entities';
@@ -20,31 +20,43 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
   const [remindersSent, setRemindersSent] = useState<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const fetchData = useCallback(async () => {
+    // This function can now be called to refresh the data
+    const [dbRoutines, dbStatus] = await Promise.all([
+      getRoutines(),
+      getCompletionStatus(),
+    ]);
+    setRoutines(dbRoutines.filter(r => r.remindersEnabled));
+    setCompletionStatus(dbStatus);
+  }, []);
+
   useEffect(() => {
-    // We need to create the audio element in the browser
+    // Create the audio element on the client
     if (typeof window !== 'undefined') {
         audioRef.current = new Audio('/notification.mp3');
     }
-
-    async function fetchData() {
-      const [dbRoutines, dbStatus] = await Promise.all([
-        getRoutines(),
-        getCompletionStatus(),
-      ]);
-      setRoutines(dbRoutines.filter(r => r.remindersEnabled));
-      setCompletionStatus(dbStatus);
-    }
+    
+    // Fetch initial data
     fetchData();
-  }, []);
 
-  const playNotificationSound = () => {
+    // Set up an interval to re-fetch data periodically (e.g., every 5 minutes)
+    // This ensures the provider has the latest routines and completion statuses
+    const fetchDataIntervalId = setInterval(fetchData, 5 * 60 * 1000); // 5 minutes
+
+    return () => {
+        clearInterval(fetchDataIntervalId);
+    };
+
+  }, [fetchData]);
+
+  const playNotificationSound = useCallback(() => {
     if (soundEnabled && audioRef.current) {
         audioRef.current.play().catch(error => {
             console.error("Audio play failed:", error);
             // This can happen if the user hasn't interacted with the page yet.
         });
     }
-  }
+  }, [soundEnabled]);
 
   useEffect(() => {
     const checkReminders = () => {
@@ -82,7 +94,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
-    const intervalId = setInterval(checkReminders, 60000); // Check every minute
+    const reminderCheckIntervalId = setInterval(checkReminders, 60000); // Check every minute
 
     // Reset sent reminders at midnight
     const resetDailyReminders = () => {
@@ -94,10 +106,10 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
     const dailyResetInterval = setInterval(resetDailyReminders, 60000);
 
     return () => {
-        clearInterval(intervalId)
+        clearInterval(reminderCheckIntervalId)
         clearInterval(dailyResetInterval);
     };
-  }, [routines, completionStatus, toast, remindersSent, soundEnabled]);
+  }, [routines, completionStatus, toast, remindersSent, playNotificationSound]);
 
   return <>{children}</>;
 }
