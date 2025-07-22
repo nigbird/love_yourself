@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Flower2, BookHeart, Target, Gift, BarChart, Settings } from 'lucide-react';
+import { Flower2, BookHeart, Target, Gift, BarChart } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Carousel,
@@ -56,13 +56,6 @@ const navItems: NavItem[] = [
     icon: Gift,
     color: 'text-sky-300',
     shadowColor: 'shadow-sky-500/50',
-  },
-  {
-    href: '/settings',
-    label: 'Settings',
-    icon: Settings,
-    color: 'text-slate-300',
-    shadowColor: 'shadow-slate-500/50',
   },
 ];
 
