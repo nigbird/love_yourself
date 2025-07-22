@@ -147,7 +147,7 @@ export default function GoalsPage() {
             </Dialog>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             {goals.map((goal) => (
                 <Card key={goal.id} className="bg-card/50 backdrop-blur-sm border-white/10 flex flex-col">
                     <CardHeader className="flex flex-row items-start justify-between">

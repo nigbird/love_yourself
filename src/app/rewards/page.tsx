@@ -140,7 +140,7 @@ export default function RewardsPage() {
                             </DialogContent>
                         </Dialog>
                     </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {rewards.map(reward => (
                             <Card key={reward.id} className="flex flex-col">
                                 <CardHeader>
@@ -185,7 +185,7 @@ export default function RewardsPage() {
                             </Card>
                         ))}
                          {rewards.length === 0 && (
-                            <p className="text-center text-muted-foreground py-8">You haven't added any rewards yet.</p>
+                            <p className="text-center text-muted-foreground py-8 col-span-full">You haven't added any rewards yet.</p>
                         )}
                     </CardContent>
                 </Card>

@@ -117,7 +117,7 @@ export default function WishlistPage() {
             </Dialog>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {wishes.map(wish => (
                 <Card key={wish.id} className="bg-card/50 backdrop-blur-sm border-white/10 flex flex-col overflow-hidden">
                     <CardHeader className="flex flex-row items-start justify-between p-4">

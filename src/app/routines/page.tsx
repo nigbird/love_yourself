@@ -198,7 +198,7 @@ export default function RoutinesPage() {
             </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {routines.map(routine => (
                 <Card key={routine.id} className="bg-card/50 backdrop-blur-sm border-white/10 flex flex-col">
                     <CardHeader className="flex flex-row items-start justify-between">

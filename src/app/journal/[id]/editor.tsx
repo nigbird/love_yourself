@@ -164,19 +164,19 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
         </div>
         
         <Card className="flex flex-col bg-[hsl(var(--paper))] text-paper-foreground shadow-2xl rounded-2xl min-h-[calc(100vh-12rem)]">
-        <CardContent className="p-8 flex-1 flex flex-col gap-4">
-            <div className="flex justify-between items-start gap-4">
+        <CardContent className="p-4 sm:p-8 flex-1 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="flex-grow">
                 <Input
                     placeholder="Title"
-                    className="text-4xl font-bold h-auto bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 font-headline"
+                    className="text-3xl sm:text-4xl font-bold h-auto bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 font-headline"
                     value={currentEntry.title}
                     onChange={(e) => handleUpdateEntry('title', e.target.value)}
                 />
                 <p className="text-sm text-paper-foreground/60">{new Date(currentEntry.createdAt).toLocaleString()}</p>
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
                     <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-3xl w-12 h-12">
@@ -228,7 +228,7 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
 
                     <Button onClick={handleGenerateImage} variant="outline" size="sm" className="bg-accent/20 border-accent/30 text-accent-foreground hover:bg-accent/30" disabled={isGeneratingImage}>
                     {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    Illustrate my thoughts
+                    Illustrate
                     </Button>
 
                     {currentEntry.imageUrl && (
