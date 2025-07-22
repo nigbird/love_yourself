@@ -39,11 +39,11 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <SettingsProvider>
-            <ReminderProvider>
+          <ReminderProvider>
             <AppLayout>
-                {children}
+              {children}
             </AppLayout>
-            </ReminderProvider>
+          </ReminderProvider>
         </SettingsProvider>
         <Toaster />
       </body>

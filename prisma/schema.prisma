@@ -1,112 +1,106 @@
 
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
-generator client {
-  provider   = "prisma-client-js"
-  engineType = "binary"
-}
-
-// ================================================= //
-// ///////////////// User Models /////////////////// //
-// ================================================= //
-
 model User {
-  id                  String                @id @default(cuid())
-  email               String                @unique
+  id                  String               @id @default(cuid())
+  email               String               @unique
   name                String?
-  rewardPoints        Int                   @default(0)
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  rewardPoints        Int                  @default(0)
   routines            Routine[]
   goals               Goal[]
   journalEntries      JournalEntry[]
   wishes              Wish[]
   redeemableRewards   RedeemableReward[]
-  routineLogs         RoutineCompletionLog[]
-  goalLogs            GoalCompletionLog[]
-  wishFulfillmentLogs WishFulfillmentLog[]
   rewardRedemptionLog RewardRedemptionLog[]
+  wishFulfillmentLog  WishFulfillmentLog[]
+  notifications       Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// ================================================= //
-// //////////////// Feature Models ///////////////// //
-// ================================================= //
+model Routine {
+  id                   String                 @id @default(cuid())
+  name                 String
+  frequency            String // daily, weekly, monthly, custom
+  daysOfWeek           String? // Comma-separated list of numbers (0-6)
+  timeOfDay            String? // HH:mm format
+  remindersEnabled     Boolean                @default(true)
+  rewardPoints         Int
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String
+  completionLogs       RoutineCompletionLog[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+}
 
 model Goal {
-  id           String    @id @default(cuid())
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  name         String
-  type         String // Was GoalType enum
-  rewardPoints Int
-  targetValue  Float?
-  currentValue Float?
-  unit         String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id               String              @id @default(cuid())
+  name             String
+  type             String // personal_measurable, spiritual
+  targetValue      Float?
+  currentValue     Float?              @default(0)
+  unit             String?
+  rewardPoints     Int
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  completionLogs   GoalCompletionLog[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 }
 
 model JournalEntry {
   id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
   title     String
   content   String
   imageUrl  String?
   mood      String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Wish {
   id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
   title     String
   note      String?
   imageUrl  String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Routine {
-  id               String   @id @default(cuid())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId           String
-  name             String
-  frequency        String   // Was RoutineFrequency enum
-  daysOfWeek       String? // Storing as comma-separated string
-  timeOfDay        String?
-  remindersEnabled Boolean  @default(true)
-  rewardPoints     Int
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-}
-
 model RedeemableReward {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  title       String
-  description String?
-  cost        Int
-  isEnabled   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String                @id @default(cuid())
+  title        String
+  description  String?
+  cost         Int
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  redemptions  RewardRedemptionLog[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
 }
 
-// ================================================= //
-// ////////////////// Log Models /////////////////// //
-// ================================================= //
+// LOGS
 
 model RoutineCompletionLog {
   id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
   routineId    String
+  routine      Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  userId       String
   routineName  String
   rewardPoints Int
   completedAt  DateTime @default(now())
@@ -114,9 +108,9 @@ model RoutineCompletionLog {
 
 model GoalCompletionLog {
   id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
   goalId       String
+  goal         Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  userId       String
   goalName     String
   goalType     String
   rewardPoints Int
@@ -125,21 +119,32 @@ model GoalCompletionLog {
 
 model WishFulfillmentLog {
   id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
   wishId      String
   wishTitle   String
   wishNote    String?
   imageUrl    String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
   fulfilledAt DateTime @default(now())
 }
 
 model RewardRedemptionLog {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
+  id          String         @id @default(cuid())
   rewardId    String
+  reward      RedeemableReward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   rewardTitle String
   pointsSpent Int
-  redeemedAt  DateTime @default(now())
+  redeemedAt  DateTime       @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  read      Boolean  @default(false)
+  url       String? // Optional URL to link to
+  createdAt DateTime @default(now())
 }

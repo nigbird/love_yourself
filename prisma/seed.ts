@@ -156,6 +156,25 @@ async function main() {
         console.log(`Journal entry "${entryData.title}" already exists. Skipping.`);
       }
   }
+  
+  // Seed Notifications
+  await prisma.notification.deleteMany({ where: { userId: user.id }});
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: user.id,
+        message: "Welcome to Bloom! Let's start your journey.",
+        url: "/routines"
+      },
+      {
+        userId: user.id,
+        message: "Don't forget to set your first goal.",
+        url: "/goals",
+        read: true
+      }
+    ]
+  });
+  console.log(`Seeded notifications.`);
 
 
   console.log(`Seeding finished.`)

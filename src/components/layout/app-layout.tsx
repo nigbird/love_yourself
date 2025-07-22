@@ -2,15 +2,15 @@
 'use client';
 
 import type { ReactNode } from "react";
-import { HeartHandshake, Bell, Star, Settings } from 'lucide-react';
+import { HeartHandshake, Star, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getUserRewardPoints } from "@/app/user/actions";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationCenter } from "../notifications/notification-center";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -46,13 +46,13 @@ export function AppLayout({ children }: AppLayoutProps) {
             <span className="font-bold text-lg font-headline text-primary">Love Yourself</span>
           </a>
           <div className="flex-grow"></div>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-6">
              <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Link href="/rewards" className="relative text-muted-foreground hover:text-primary transition-colors">
                             <Star />
-                            <Badge variant="secondary" className="absolute -top-2 -right-3 px-2 py-0.5 text-xs">{points}</Badge>
+                            <Badge variant="secondary" className="absolute -top-2 -right-3 px-1.5 py-0 text-xs">{points}</Badge>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -60,18 +60,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </TooltipContent>
                 </Tooltip>
              </TooltipProvider>
-             <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <button className="text-muted-foreground hover:text-primary transition-colors">
-                            <Bell />
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Notifications (coming soon)</p>
-                    </TooltipContent>
-                </Tooltip>
-             </TooltipProvider>
+
+             <NotificationCenter />
+             
              <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
