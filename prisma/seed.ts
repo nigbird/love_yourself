@@ -10,22 +10,30 @@ const prisma = new PrismaClient()
 // This is a static ID that will be used for the seed user.
 // In a real application, this would be a dynamic Firebase UID.
 const SEED_USER_ID = 'seed-user-id';
+const SEED_USER_EMAIL = 'user@example.com';
 
 async function main() {
   console.log(`Start seeding ...`)
 
-  // Create a sample user if they don't exist
-  const user = await prisma.user.upsert({
-    where: { id: SEED_USER_ID },
-    update: {},
-    create: {
-      id: SEED_USER_ID,
-      email: 'user@example.com',
-      name: 'Bloom User',
-      rewardPoints: 0,
-    },
-  })
-  console.log(`Upserted user with id: ${user.id}`)
+  // Find or create the user
+  let user = await prisma.user.findUnique({
+    where: { email: SEED_USER_EMAIL },
+  });
+
+  if (!user) {
+      user = await prisma.user.create({
+          data: {
+              id: SEED_USER_ID,
+              email: SEED_USER_EMAIL,
+              name: 'Bloom User',
+              rewardPoints: 0,
+          },
+      });
+      console.log(`Created user with id: ${user.id}`);
+  } else {
+      console.log(`User with email ${SEED_USER_EMAIL} already exists. Skipping user creation.`);
+  }
+
 
   // Seed Routines
   const routines = [
