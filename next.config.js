@@ -28,7 +28,13 @@ const nextConfig = {
         hostname: 'tse2.mm.bing.net',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
