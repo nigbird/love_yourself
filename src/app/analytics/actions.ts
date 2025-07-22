@@ -110,9 +110,11 @@ export const getAnalyticsData = async (timeRange: TimeRange) => {
             if(!dataMap.has(key)) {
                 dataMap.set(key, { name: format(log.completedAt, 'MMM d'), completed: 0, tooltip: [] });
             }
-            const dayData = dataMap.get(key)!;
-            dayData.completed++;
-            dayData.tooltip.push(`${log.goalName} (+${log.rewardPoints}pts)`);
+            const dayData = dataMap.get(key);
+            if (dayData) {
+                dayData.completed++;
+                dayData.tooltip.push(`${log.goalName} (+${log.rewardPoints}pts)`);
+            }
         });
 
         const data = Array.from(dataMap.values());
