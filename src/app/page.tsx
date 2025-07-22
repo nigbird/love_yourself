@@ -3,15 +3,15 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Flower2, BookHeart, Target, Gift, BarChart } from 'lucide-react';
+import { Flower2, BookHeart, Target, Gift, BarChart, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
+  type CarouselApi,
 } from '@/components/ui/carousel';
+import { useEffect, useState } from 'react';
 
 interface NavItem {
   href: string;
@@ -43,6 +43,13 @@ const navItems: NavItem[] = [
     color: 'text-amber-300',
     shadowColor: 'shadow-amber-500/50',
   },
+   {
+    href: '/analytics',
+    label: 'Analytics',
+    icon: BarChart,
+    color: 'text-indigo-300',
+    shadowColor: 'shadow-indigo-500/50',
+  },
   {
     href: '/wish',
     label: 'Wishlist',
@@ -51,15 +58,32 @@ const navItems: NavItem[] = [
     shadowColor: 'shadow-sky-500/50',
   },
   {
-    href: '/analytics',
-    label: 'Analytics',
-    icon: BarChart,
-    color: 'text-indigo-300',
-    shadowColor: 'shadow-indigo-500/50',
+    href: '/settings',
+    label: 'Settings',
+    icon: Settings,
+    color: 'text-slate-300',
+    shadowColor: 'shadow-slate-500/50',
   },
 ];
 
 export default function HomePage() {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+
+    api.on('select', () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+  }, [api]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] bg-background text-center px-4">
       <div className="absolute inset-0 bg-grid-white/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
@@ -85,6 +109,7 @@ export default function HomePage() {
 
       <div className="relative w-full max-w-4xl mt-12 z-10">
         <Carousel
+          setApi={setApi}
           opts={{
             align: 'start',
             loop: true,
@@ -124,9 +149,18 @@ export default function HomePage() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="text-primary hover:text-primary-foreground hover:bg-primary/80 border-primary" />
-          <CarouselNext className="text-primary hover:text-primary-foreground hover:bg-primary/80 border-primary" />
         </Carousel>
+        <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: count }).map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => api?.scrollTo(index)}
+                    className={`h-2 w-2 rounded-full transition-all ${
+                        current === index ? 'w-4 bg-primary' : 'bg-muted'
+                    }`}
+                />
+            ))}
+        </div>
       </div>
     </div>
   );
