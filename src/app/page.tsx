@@ -91,9 +91,9 @@ export default function HomePage() {
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-8 justify-center">
+          <CarouselContent className="-ml-4 justify-center">
             {navItems.map((item, index) => (
-              <CarouselItem key={index} className="pl-8 basis-auto sm:basis-1/3 md:basis-1/5">
+              <CarouselItem key={index} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                 <div className="p-1">
                   <motion.div
                     whileHover={{ scale: 1.05, y: -5 }}
@@ -102,7 +102,7 @@ export default function HomePage() {
                   >
                     <Link
                       href={item.href}
-                      className={`relative w-40 h-40 rounded-full flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 overflow-hidden`}
+                      className={`relative w-36 h-36 rounded-full flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 overflow-hidden`}
                     >
                       <div
                         className="absolute inset-0 opacity-10"
@@ -111,9 +111,9 @@ export default function HomePage() {
                         }}
                       ></div>
                       <div className="relative z-10 flex flex-col items-center justify-center text-center">
-                        <item.icon className={`w-12 h-12 ${item.color}`} />
+                        <item.icon className={`w-10 h-10 ${item.color}`} />
                         <span
-                          className={`mt-4 text-xl font-bold ${item.color}`}
+                          className={`mt-3 text-lg font-bold ${item.color}`}
                         >
                           {item.label}
                         </span>
