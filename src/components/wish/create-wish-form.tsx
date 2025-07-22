@@ -12,6 +12,9 @@ import type { Wish } from '@/domain/entities';
 import { useEffect, useRef, useState } from 'react';
 import { ImageUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useAuth } from '../auth/auth-provider';
+import { storage } from '@/lib/firebase/client';
 
 const formSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.'),
@@ -28,7 +31,14 @@ interface CreateWishFormProps {
 
 function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<FormValues>({
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
@@ -36,11 +46,6 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
       imageUrl: '',
     },
   });
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageUrl = watch('imageUrl');
-  const { toast } = useToast();
-
 
   useEffect(() => {
     if (wishToEdit) {
@@ -49,25 +54,20 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
         note: wishToEdit.note,
         imageUrl: wishToEdit.imageUrl,
       });
+      setImagePreview(wishToEdit.imageUrl || null);
+      setImageFile(null);
     } else {
       reset({
         title: '',
         note: '',
         imageUrl: '',
       });
+      setImagePreview(null);
+      setImageFile(null);
     }
   }, [wishToEdit, reset]);
 
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
-    try {
-        await onWishSubmitted(data);
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 30 * 1024 * 1024) { // 30MB limit
@@ -78,11 +78,39 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
           });
           return;
       }
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setValue('imageUrl', reader.result as string, { shouldValidate: true });
+        setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    let finalImageUrl = wishToEdit?.imageUrl || '';
+
+    try {
+      if (imageFile && user) {
+        toast({ title: "Uploading image...", description: "Please wait a moment." });
+        const imageStorageRef = storageRef(storage, `wishes/${user.uid}/${Date.now()}_${imageFile.name}`);
+        const snapshot = await uploadBytes(imageStorageRef, imageFile);
+        finalImageUrl = await getDownloadURL(snapshot.ref);
+      } else if (imageFile && !user) {
+        toast({ title: "Authentication Error", description: "You must be logged in to upload images.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const submissionData = { ...data, imageUrl: finalImageUrl };
+      await onWishSubmitted(submissionData);
+
+    } catch (error) {
+      console.error("Failed to save wish", error);
+      toast({ title: "Error", description: "Could not save the wish. Check the console for details.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -99,8 +127,8 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
             <ImageUp className="mr-2" /> Upload Image
         </Button>
-        <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-        {imageUrl && <img src={imageUrl} alt="Preview" className="mt-2 rounded-md max-h-40 w-auto mx-auto" />}
+        <input type="file" ref={fileInputRef} onChange={handleImageFileChange} className="hidden" accept="image/*" />
+        {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 rounded-md max-h-40 w-auto mx-auto" />}
       </div>
       
       <div className="space-y-2">
