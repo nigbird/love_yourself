@@ -26,15 +26,14 @@ export function NotificationCenter() {
   };
 
   useEffect(() => {
-    // Fetch notifications when the popover opens
+    // Fetch notifications when the popover opens for the first time
     if (isOpen) {
       fetchNotifications();
     }
   }, [isOpen]);
   
-  // Also fetch periodically while app is open
+  // Also fetch periodically
   useEffect(() => {
-      fetchNotifications(); // initial fetch
       const interval = setInterval(fetchNotifications, 60000); // every minute
       return () => clearInterval(interval);
   }, []);

@@ -1,29 +1,40 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 224 71% 4%; /* Midnight Blue */
-    --foreground: 210 40% 98%;
-    --card: 224 71% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 258 100% 80%; /* Lavender Glow */
-    --primary-foreground: 258 100% 10%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 45 100% 70%; /* Gold Glow */
-    --accent-foreground: 45 100% 10%;
-    --destructive: 0 63% 31%;
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 210 40% 98%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 210 40% 98%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 258 95% 60%; /* Adjusted for light mode */
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 45 100% 60%; /* Adjusted for light mode */
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 27%;
-    --input: 217 33% 22%;
-    --ring: 258 100% 80%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 258 95% 60%;
+ 
     --radius: 0.8rem;
+
     --chart-1: 258 100% 80%;
     --chart-2: 45 100% 70%;
     --chart-3: 258 100% 70%;
@@ -71,3 +82,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
