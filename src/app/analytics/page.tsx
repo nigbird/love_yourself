@@ -2,8 +2,6 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +12,7 @@ import type { GoalCompletionLog, WishFulfillmentLog } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Gift, Loader2 } from "lucide-react";
 import { getAnalyticsData } from './actions';
+import { PageLayout } from "@/components/layout/page-layout";
 
 type ChartData = { name: string; completed: number; tooltip: string; }[];
 
@@ -41,7 +40,7 @@ export default function AnalyticsPage() {
   }, [timeRange]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+    <PageLayout>
       <div className="w-full max-w-5xl space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="text-3xl font-headline font-bold text-primary">
@@ -142,13 +141,7 @@ export default function AnalyticsPage() {
                 </CardContent>
             </Card>
         </div>
-
-        <div className="text-center">
-            <Button asChild variant="ghost">
-                <Link href="/">Back to Home</Link>
-            </Button>
-        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

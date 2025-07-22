@@ -2,11 +2,10 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Target, MoreVertical, Edit, Trash2, CheckCircle, RefreshCw } from "lucide-react";
+import { PlusCircle, Target, MoreVertical, Edit, Trash2, CheckCircle, RefreshCw, Home } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ import type { Goal, MeasurableGoal } from "@/domain/entities";
 import { CreateGoalForm } from "@/components/goals/create-goal-form";
 import { UpdateGoalProgressForm } from "@/components/goals/update-goal-progress-form";
 import { getGoals, saveGoal, deleteGoal, completeGoal } from './actions';
+import { PageLayout } from "@/components/layout/page-layout";
 
 
 export default function GoalsPage() {
@@ -115,7 +115,7 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+    <PageLayout>
       <div className="w-full max-w-4xl space-y-8">
         <div className="space-y-4 text-center">
             <h1 className="text-3xl font-headline font-bold text-primary">
@@ -230,10 +230,10 @@ export default function GoalsPage() {
 
         <div className="text-center">
             <Button asChild variant="ghost">
-                <Link href="/">Back to Home</Link>
+                <a href="/"><Home className="mr-2"/>Back to Home</a>
             </Button>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

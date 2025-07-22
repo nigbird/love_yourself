@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PageLayout } from '@/components/layout/page-layout';
 
 
 type PointsHistory = {
@@ -99,7 +100,7 @@ export default function RewardsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+    <PageLayout>
       <div className="w-full max-w-5xl space-y-8">
         <div className="space-y-4 text-center">
             <h1 className="text-3xl font-headline font-bold text-primary">Rewards & Points</h1>
@@ -221,6 +222,6 @@ export default function RewardsPage() {
             </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </PageLayout>
   );
 }

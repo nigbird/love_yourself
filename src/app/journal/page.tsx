@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookHeart, PlusCircle, Home } from "lucide-react";
 import type { JournalEntry } from "@/domain/entities";
 import { getJournalEntries } from './actions';
+import { PageLayout } from "@/components/layout/page-layout";
 
 
 export default function JournalListPage() {
@@ -23,7 +24,7 @@ export default function JournalListPage() {
   }, []);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+    <PageLayout>
       <div className="w-full max-w-4xl space-y-8">
         <div className="space-y-4 text-center">
             <h1 className="text-3xl font-headline font-bold text-primary flex items-center justify-center gap-2">
@@ -76,10 +77,10 @@ export default function JournalListPage() {
         
         <div className="text-center">
             <Button asChild variant="ghost">
-                <Link href="/"><Home className="mr-2"/>Back to Home</Link>
+                <a href="/"><Home className="mr-2"/>Back to Home</a>
             </Button>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

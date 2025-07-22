@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +19,7 @@ import Image from 'next/image';
 import CreateWishForm from '@/components/wish/create-wish-form';
 import type { Wish } from '@/domain/entities';
 import { getWishes, saveWish, deleteWish, fulfillWish } from './actions';
+import { PageLayout } from '@/components/layout/page-layout';
 
 
 export default function WishlistPage() {
@@ -88,7 +88,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+    <PageLayout>
       <div className="w-full max-w-5xl space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="text-3xl font-headline font-bold text-primary">My Wishlist</h1>
@@ -182,10 +182,10 @@ export default function WishlistPage() {
 
         <div className="text-center mt-8">
             <Button asChild variant="ghost">
-                <Link href="/"><Home className="mr-2"/> Back to Home</Link>
+                <a href="/"><Home className="mr-2"/> Back to Home</a>
             </Button>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

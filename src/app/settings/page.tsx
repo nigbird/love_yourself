@@ -11,12 +11,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
+import { PageLayout } from "@/components/layout/page-layout";
 
 export default function SettingsPage() {
     const { soundEnabled, setSoundEnabled } = useSettings();
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center min-h-screen">
+    <PageLayout>
       <div className="w-full max-w-2xl space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="text-3xl font-headline font-bold text-primary">
@@ -84,6 +85,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }

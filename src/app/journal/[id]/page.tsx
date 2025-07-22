@@ -1,6 +1,7 @@
 
 import { getJournalEntry } from '../actions';
 import { JournalEditor } from './editor';
+import { PageLayout } from '@/components/layout/page-layout';
 
 export default async function JournalEntryPage({ params }: { params: { id: string } }) {
   const entryId = params.id;
@@ -20,5 +21,9 @@ export default async function JournalEntryPage({ params }: { params: { id: strin
     entry = await getJournalEntry(entryId);
   }
 
-  return <JournalEditor initialEntry={entry} />;
+  return (
+    <PageLayout showBackButton={false}>
+      <JournalEditor initialEntry={entry} />
+    </PageLayout>
+  );
 }
