@@ -138,6 +138,5 @@ export async function redeemReward(reward: RedeemableReward) {
     });
     
     revalidatePath('/rewards');
-    revalidatePath('/');
+    revalidatePath('/'); // Revalidate root layout for points update
 }
-

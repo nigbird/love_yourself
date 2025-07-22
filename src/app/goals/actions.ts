@@ -91,6 +91,7 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
 
   revalidatePath('/goals');
   revalidatePath('/analytics');
+  revalidatePath('/'); // Revalidate root layout for points update
 }
 
 export async function getCompletedGoals() {

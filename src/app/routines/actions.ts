@@ -113,6 +113,7 @@ export async function markRoutineAsDone(routine: Routine) {
     }
   revalidatePath('/routines');
   revalidatePath('/analytics');
+  revalidatePath('/'); // Revalidate root layout for points update
 }
 
 export async function undoCompletion(routineId: string) {
@@ -151,5 +152,6 @@ export async function undoCompletion(routineId: string) {
 
         revalidatePath('/routines');
         revalidatePath('/analytics');
+        revalidatePath('/'); // Revalidate root layout for points update
     }
 }
