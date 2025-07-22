@@ -165,22 +165,22 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
         
         <Card className="flex flex-col bg-[hsl(var(--paper))] text-paper-foreground shadow-2xl rounded-2xl min-h-[calc(100vh-12rem)]">
         <CardContent className="p-4 sm:p-8 flex-1 flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div className="flex-grow">
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-start gap-4">
+                <div className="flex-grow w-full">
                 <Input
                     placeholder="Title"
-                    className="text-3xl sm:text-4xl font-bold h-auto bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 font-headline"
+                    className="text-2xl sm:text-4xl font-bold h-auto bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 font-headline"
                     value={currentEntry.title}
                     onChange={(e) => handleUpdateEntry('title', e.target.value)}
                 />
                 <p className="text-sm text-paper-foreground/60">{new Date(currentEntry.createdAt).toLocaleString()}</p>
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
+                <div className="flex items-center justify-end gap-2 flex-shrink-0 w-full sm:w-auto">
                     <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-3xl w-12 h-12">
-                            {currentEntry.mood || <SmilePlus className="h-8 w-8 text-muted-foreground"/>}
+                        <Button variant="ghost" size="icon" className="text-2xl w-10 h-10 sm:w-12 sm:h-12">
+                            {currentEntry.mood || <SmilePlus className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground"/>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2">
