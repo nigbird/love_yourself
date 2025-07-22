@@ -61,31 +61,33 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
     throw new Error("User not found");
   }
 
-  // Create a log entry for the completed goal
-  await prisma.goalCompletionLog.create({
-    data: {
-      goalId: goal.id,
-      userId: user.id,
-      goalName: goal.name,
-      goalType: goal.type as string,
-      rewardPoints: goal.rewardPoints,
-      completedAt: new Date(),
-    }
-  });
-
-  // Optionally, add reward points to the user
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      rewardPoints: {
-        increment: goal.rewardPoints
+  await prisma.$transaction(async (tx) => {
+    // 1. Create a log entry for the completed goal
+    await tx.goalCompletionLog.create({
+      data: {
+        goalId: goal.id,
+        userId: user.id,
+        goalName: goal.name,
+        goalType: goal.type,
+        rewardPoints: goal.rewardPoints,
+        completedAt: new Date(),
       }
-    }
-  });
+    });
 
-  // Delete the original goal
-  await prisma.goal.delete({
-    where: { id: goal.id },
+    // 2. Add reward points to the user
+    await tx.user.update({
+      where: { id: user.id },
+      data: {
+        rewardPoints: {
+          increment: goal.rewardPoints
+        }
+      }
+    });
+
+    // 3. Delete the original goal
+    await tx.goal.delete({
+      where: { id: goal.id },
+    });
   });
 
   revalidatePath('/goals');
