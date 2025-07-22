@@ -100,7 +100,7 @@ export default function HomePage() {
         </motion.p>
       </div>
 
-      <div className="relative w-full max-w-4xl mt-12 z-10">
+      <div className="relative w-full max-w-5xl mt-12 z-10">
         <Carousel
           setApi={setApi}
           opts={{
@@ -109,36 +109,34 @@ export default function HomePage() {
           }}
           className="w-full"
         >
-          <CarouselContent className="-ml-4 justify-center">
+          <CarouselContent className="-ml-4">
             {navItems.map((item, index) => (
               <CarouselItem key={index} className="pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                <div className="p-1">
-                  <motion.div
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex justify-center"
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-1"
+                >
+                  <Link
+                    href={item.href}
+                    className={`relative w-full aspect-square rounded-full flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 overflow-hidden`}
                   >
-                    <Link
-                      href={item.href}
-                      className={`relative w-36 h-36 rounded-full flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm border border-white/10 shadow-lg ${item.shadowColor} cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 overflow-hidden`}
-                    >
-                      <div
-                        className="absolute inset-0 opacity-10"
-                        style={{
-                          background: `radial-gradient(circle, hsl(var(--primary)) 0 0, transparent 70%)`,
-                        }}
-                      ></div>
-                      <div className="relative z-10 flex flex-col items-center justify-center text-center">
-                        <item.icon className={`w-10 h-10 ${item.color}`} />
-                        <span
-                          className={`mt-3 text-lg font-bold ${item.color}`}
-                        >
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                </div>
+                    <div
+                      className="absolute inset-0 opacity-10"
+                      style={{
+                        background: `radial-gradient(circle, hsl(var(--primary)) 0 0, transparent 70%)`,
+                      }}
+                    ></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center text-center p-2">
+                      <item.icon className={`w-1/3 h-1/3 ${item.color}`} />
+                      <span
+                        className={`mt-2 text-sm md:text-lg font-bold ${item.color}`}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
               </CarouselItem>
             ))}
           </CarouselContent>
