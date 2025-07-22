@@ -7,14 +7,19 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+// This is a static ID that will be used for the seed user.
+// In a real application, this would be a dynamic Firebase UID.
+const SEED_USER_ID = 'seed-user-id';
+
 async function main() {
   console.log(`Start seeding ...`)
 
   // Create a sample user if they don't exist
   const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
+    where: { id: SEED_USER_ID },
     update: {},
     create: {
+      id: SEED_USER_ID,
       email: 'user@example.com',
       name: 'Bloom User',
       rewardPoints: 0,
@@ -189,3 +194,5 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
+
+    

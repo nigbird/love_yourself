@@ -126,7 +126,7 @@ export default function RewardsPage() {
 
             <TabsContent value="redeem" className="mt-6">
                 <Card className="bg-card/50 backdrop-blur-sm">
-                    <CardHeader className="flex-row items-center justify-between">
+                    <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4">
                         <CardTitle>Redeemable Rewards</CardTitle>
                         <Dialog open={isFormOpen} onOpenChange={(open) => { if(!open) setEditingReward(null); setIsFormOpen(open);}}>
                             <DialogTrigger asChild>
@@ -225,3 +225,5 @@ export default function RewardsPage() {
     </PageLayout>
   );
 }
+
+    

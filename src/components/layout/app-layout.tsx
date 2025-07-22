@@ -29,9 +29,11 @@ export async function AppLayout({ children }: AppLayoutProps) {
              <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Link href="/rewards" className="relative text-muted-foreground hover:text-primary transition-colors">
-                            <Star />
-                            <Badge variant="secondary" className="absolute -top-2 -right-3 px-1.5 py-0 text-xs">{points}</Badge>
+                        <Link href="/rewards" className="text-muted-foreground hover:text-primary transition-colors">
+                            <div className="relative">
+                                <Star />
+                                <Badge variant="secondary" className="absolute -top-2 -right-3 px-1.5 py-0 text-xs">{points}</Badge>
+                            </div>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent>

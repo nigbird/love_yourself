@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client-js"
-  engineType    = "binary"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -12,51 +11,85 @@ datasource db {
 }
 
 model User {
-  id                  String                @id @default(cuid())
-  name                String
-  email               String                @unique
-  rewardPoints        Int                   @default(0)
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  routines            Routine[]
-  goals               Goal[]
-  journalEntries      JournalEntry[]
-  wishes              Wish[]
-  notifications       Notification[]
-  redeemableRewards   RedeemableReward[]
-  routineLogs         RoutineCompletionLog[]
-  goalLogs            GoalCompletionLog[]
+  id               String    @id @unique
+  email            String?   @unique
+  name             String?
+  rewardPoints     Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  routines         Routine[]
+  goals            Goal[]
+  journalEntries   JournalEntry[]
+  wishes           Wish[]
+  notifications    Notification[]
+  redeemableRewards RedeemableReward[]
+  rewardRedemptionLogs RewardRedemptionLog[]
+  routineCompletionLogs RoutineCompletionLog[]
+  goalCompletionLogs GoalCompletionLog[]
   wishFulfillmentLogs WishFulfillmentLog[]
-  rewardRedemptionLog RewardRedemptionLog[]
+}
+
+model Routine {
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  frequency        String // daily, weekly, monthly, custom
+  daysOfWeek       String? // Comma-separated list of numbers (0-6)
+  timeOfDay        String? // HH:MM
+  remindersEnabled Boolean   @default(true)
+  rewardPoints     Int
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RoutineCompletionLog {
+  id           String   @id @default(cuid())
+  userId       String
+  routineId    String
+  routineName  String
+  rewardPoints Int
+  completedAt  DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
 
 model Goal {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
+  userId       String
   name         String
-  type         String // Was 'GoalType' enum. Using String for compatibility.
+  type         String // personal_measurable, spiritual
+  rewardPoints Int
   targetValue  Float?
   currentValue Float?
   unit         String?
-  rewardPoints Int
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model GoalCompletionLog {
   id           String   @id @default(cuid())
-  goalId       String
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalId       String
   goalName     String
   goalType     String
   rewardPoints Int
-  completedAt  DateTime @default(now())
+  completedAt  DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
+
 
 model JournalEntry {
   id        String   @id @default(cuid())
+  userId    String
   title     String
   content   String
   imageUrl  String?
@@ -64,86 +97,69 @@ model JournalEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-}
 
-model Notification {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  message   String
-  url       String?
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model RedeemableReward {
-  id           String                @id @default(cuid())
-  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  title        String
-  description  String?
-  cost         Int
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
-  redemptions  RewardRedemptionLog[]
-}
-
-model RewardRedemptionLog {
-  id           String           @id @default(cuid())
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  reward       RedeemableReward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
-  rewardId     String
-  rewardTitle  String
-  pointsSpent  Int
-  redeemedAt   DateTime         @default(now())
-}
-
-model Routine {
-  id                String   @id @default(cuid())
-  name              String
-  frequency         String // Was 'RoutineFrequency' enum. Using String.
-  daysOfWeek        String? // Storing comma-separated string of numbers (e.g., "0,3")
-  timeOfDay         String?
-  rewardPoints      Int
-  remindersEnabled  Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            String
-  completionLogs    RoutineCompletionLog[]
-}
-
-model RoutineCompletionLog {
-  id           String   @id @default(cuid())
-  routineId    String
-  routine      Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  routineName  String
-  rewardPoints Int
-  completedAt  DateTime @default(now())
+  @@index([userId])
 }
 
 model Wish {
   id        String   @id @default(cuid())
+  userId    String
   title     String
   note      String?
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+
+  @@index([userId])
 }
 
 model WishFulfillmentLog {
   id          String   @id @default(cuid())
-  wishId      String
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wishId      String
   wishTitle   String
   wishNote    String?
   imageUrl    String?
-  fulfilledAt DateTime @default(now())
+  fulfilledAt DateTime
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  url       String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model RedeemableReward {
+  id                 String    @id @default(cuid())
+  userId             String
+  title              String
+  description        String?
+  cost               Int
+  isEnabled          Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  redemptionLogs     RewardRedemptionLog[]
+
+  @@index([userId])
+}
+
+model RewardRedemptionLog {
+  id           String   @id @default(cuid())
+  userId       String
+  rewardId     String
+  rewardTitle  String
+  pointsSpent  Int
+  redeemedAt   DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward       RedeemableReward @relation(fields: [rewardId], references: [id], onDelete:
