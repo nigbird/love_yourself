@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import type { Wish } from '@/domain/entities';
-import { useEffect, useRef } from 'react';
-import { ImageUp } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ImageUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -22,11 +22,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface CreateWishFormProps {
-  onWishSubmitted: (data: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
+  onWishSubmitted: (data: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   wishToEdit?: Wish;
 }
 
 function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -57,8 +58,13 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
     }
   }, [wishToEdit, reset]);
 
-  const onSubmit = (data: FormValues) => {
-    onWishSubmitted(data);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+        await onWishSubmitted(data);
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +109,10 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
         {errors.note && <p className="text-destructive text-sm">{errors.note.message}</p>}
       </div>
 
-      <Button type="submit" className="w-full mt-4" size="lg">Save Wish</Button>
+      <Button type="submit" className="w-full mt-4" size="lg" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Wish
+      </Button>
     </form>
   );
 }

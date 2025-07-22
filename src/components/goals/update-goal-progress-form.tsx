@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { MeasurableGoal } from '@/domain/entities';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   currentValue: z.coerce.number().min(0, 'Progress cannot be negative.'),
@@ -17,11 +18,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface UpdateGoalProgressFormProps {
-  onProgressSubmitted: (data: FormValues) => void;
+  onProgressSubmitted: (data: FormValues) => Promise<void>;
   goalToEdit: MeasurableGoal;
 }
 
 export function UpdateGoalProgressForm({ onProgressSubmitted, goalToEdit }: UpdateGoalProgressFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,8 +39,13 @@ export function UpdateGoalProgressForm({ onProgressSubmitted, goalToEdit }: Upda
     }
   }, [goalToEdit, reset]);
 
-  const onSubmit = (data: FormValues) => {
-    onProgressSubmitted(data);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+        await onProgressSubmitted(data);
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,7 +63,10 @@ export function UpdateGoalProgressForm({ onProgressSubmitted, goalToEdit }: Upda
         <p className="text-sm text-muted-foreground">Target: {goalToEdit.targetValue} {goalToEdit.unit}</p>
       </div>
 
-      <Button type="submit" className="w-full mt-4" size="lg">Update Progress</Button>
+      <Button type="submit" className="w-full mt-4" size="lg" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Update Progress
+      </Button>
     </form>
   );
 }

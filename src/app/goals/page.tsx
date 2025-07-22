@@ -128,7 +128,7 @@ export default function GoalsPage() {
         </div>
 
         <div className="text-center">
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isFormOpen} onOpenChange={(open) => { if(!open) setEditingGoal(null); setIsFormOpen(open);}}>
               <DialogTrigger asChild>
                   <Button onClick={openCreateForm} size="lg">
                       <PlusCircle className="mr-2" />

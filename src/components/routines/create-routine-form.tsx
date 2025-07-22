@@ -17,7 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { Routine } from '@/domain/entities/routine.entity';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -31,7 +32,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface CreateRoutineFormProps {
-  onRoutineCreated: (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
+  onRoutineCreated: (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   routineToEdit?: Routine;
 }
 
@@ -46,6 +47,7 @@ const weekDays = [
 ];
 
 export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRoutineFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, control, watch, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -82,8 +84,13 @@ export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRou
 
   const watchedFrequency = watch('frequency');
 
-  const onSubmit = (data: FormValues) => {
-    onRoutineCreated(data as any);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+        await onRoutineCreated(data as any);
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -169,7 +176,10 @@ export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRou
         </div>
       </div>
 
-      <Button type="submit" className="w-full mt-4" size="lg">Save Routine</Button>
+      <Button type="submit" className="w-full mt-4" size="lg" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Routine
+      </Button>
     </form>
   );
 }

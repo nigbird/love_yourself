@@ -149,7 +149,7 @@ export default function RoutinesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 flex justify-center items-center">
-                <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <Dialog open={isFormOpen} onOpenChange={(open) => { if(!open) setEditingRoutine(null); setIsFormOpen(open);}}>
                     <DialogTrigger asChild>
                         <Button onClick={openCreateForm} size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow">
                             <PlusCircle className="mr-2"/>

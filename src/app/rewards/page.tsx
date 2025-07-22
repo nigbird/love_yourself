@@ -127,7 +127,7 @@ export default function RewardsPage() {
                 <Card className="bg-card/50 backdrop-blur-sm">
                     <CardHeader className="flex-row items-center justify-between">
                         <CardTitle>Redeemable Rewards</CardTitle>
-                        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                        <Dialog open={isFormOpen} onOpenChange={(open) => { if(!open) setEditingReward(null); setIsFormOpen(open);}}>
                             <DialogTrigger asChild>
                                 <Button onClick={openCreateForm}><PlusCircle className="mr-2"/>Add Reward</Button>
                             </DialogTrigger>
@@ -183,6 +183,9 @@ export default function RewardsPage() {
                                 </CardFooter>
                             </Card>
                         ))}
+                         {rewards.length === 0 && (
+                            <p className="text-center text-muted-foreground py-8">You haven't added any rewards yet.</p>
+                        )}
                     </CardContent>
                 </Card>
             </TabsContent>

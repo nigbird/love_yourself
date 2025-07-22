@@ -98,7 +98,7 @@ export default function WishlistPage() {
         </div>
 
         <div className="text-center">
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isFormOpen} onOpenChange={(open) => { if(!open) setEditingWish(null); setIsFormOpen(open);}}>
                 <DialogTrigger asChild>
                     <Button onClick={openCreateForm} size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow">
                         <PlusCircle className="mr-2"/>
@@ -189,4 +189,3 @@ export default function WishlistPage() {
     </div>
   );
 }
-

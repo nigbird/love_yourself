@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import type { Goal, MeasurableGoal } from '@/domain/entities';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -37,11 +38,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface CreateGoalFormProps {
-  onGoalSubmitted: (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
+  onGoalSubmitted: (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   goalToEdit?: Goal | MeasurableGoal;
 }
 
 export function CreateGoalForm({ onGoalSubmitted, goalToEdit }: CreateGoalFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, control, watch, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -78,8 +80,13 @@ export function CreateGoalForm({ onGoalSubmitted, goalToEdit }: CreateGoalFormPr
 
   const watchedType = watch('type');
 
-  const onSubmit = (data: FormValues) => {
-    onGoalSubmitted(data as any);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+      await onGoalSubmitted(data as any);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -138,7 +145,10 @@ export function CreateGoalForm({ onGoalSubmitted, goalToEdit }: CreateGoalFormPr
          </div>
       )}
 
-      <Button type="submit" className="w-full mt-4" size="lg">Save Goal</Button>
+      <Button type="submit" className="w-full mt-4" size="lg" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Goal
+      </Button>
     </form>
   );
 }

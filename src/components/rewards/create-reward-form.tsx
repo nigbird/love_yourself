@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import type { RedeemableReward } from '@prisma/client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.'),
@@ -20,11 +21,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface CreateRewardFormProps {
-  onRewardSubmitted: (data: Omit<RedeemableReward, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'isEnabled'>) => void;
+  onRewardSubmitted: (data: Omit<RedeemableReward, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'isEnabled'>) => Promise<void>;
   rewardToEdit?: RedeemableReward;
 }
 
 export default function CreateRewardForm({ onRewardSubmitted, rewardToEdit }: CreateRewardFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,8 +52,13 @@ export default function CreateRewardForm({ onRewardSubmitted, rewardToEdit }: Cr
     }
   }, [rewardToEdit, reset]);
 
-  const onSubmit = (data: FormValues) => {
-    onRewardSubmitted(data as any);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+        await onRewardSubmitted(data as any);
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -74,7 +81,10 @@ export default function CreateRewardForm({ onRewardSubmitted, rewardToEdit }: Cr
       </div>
 
 
-      <Button type="submit" className="w-full mt-4" size="lg">Save Reward</Button>
+      <Button type="submit" className="w-full mt-4" size="lg" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Reward
+      </Button>
     </form>
   );
 }

@@ -193,7 +193,7 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
                     </Popover>
 
                     <Button onClick={handleSaveEntry} size="sm" disabled={isSaving}>
-                        {isSaving ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>}
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
                         Save
                     </Button>
                     {!currentEntry.id.startsWith('new-') && (
@@ -227,7 +227,7 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
                     <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
 
                     <Button onClick={handleGenerateImage} variant="outline" size="sm" className="bg-accent/20 border-accent/30 text-accent-foreground hover:bg-accent/30" disabled={isGeneratingImage}>
-                    {isGeneratingImage ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
+                    {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                     Illustrate my thoughts
                     </Button>
 
@@ -257,4 +257,3 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
     </div>
   );
 }
-
