@@ -70,10 +70,10 @@ function CreateWishForm({ onWishSubmitted, wishToEdit }: CreateWishFormProps) {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 30 * 1024 * 1024) { // 30MB limit
           toast({
               title: "Image Too Large",
-              description: "Image size cannot exceed 2MB.",
+              description: "Image size cannot exceed 30MB.",
               variant: "destructive"
           });
           return;
