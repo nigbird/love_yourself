@@ -132,7 +132,7 @@ export default function HomePage() {
                       }}
                     ></div>
                     <div className="relative z-10 flex flex-col items-center justify-center text-center p-2">
-                      <item.icon className={`w-1/3 h-1/3 ${item.color}`} />
+                      <item.icon className={`w-2/5 h-2/5 ${item.color}`} />
                       <span
                         className={`mt-2 text-sm md:text-lg font-bold ${item.color}`}
                       >
