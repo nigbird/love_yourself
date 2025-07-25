@@ -66,7 +66,7 @@ export default function HomePage() {
   const [count, setCount] = useState(0);
   const { dbUser } = useAuth();
   
-  const welcomeMessage = dbUser?.name ? `Hello ${dbUser.name}, let’s bloom slowly` : "Hello love, let’s bloom slowly";
+  const welcomeMessage = dbUser?.name ? `Hey ${dbUser.name}, roots before roses` : "Hey, roots before roses";
 
   useEffect(() => {
     if (!api) {
@@ -100,7 +100,7 @@ export default function HomePage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg text-muted-foreground max-w-2xl mx-auto"
         >
-          Your personal sanctuary for growth and reflection. Begin your journey below.
+          Grow steady, bloom beautifully. Your journey begins here.
         </motion.p>
       </div>
 
