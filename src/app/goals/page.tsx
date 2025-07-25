@@ -21,6 +21,7 @@ import { CreateGoalForm } from "@/components/goals/create-goal-form";
 import { UpdateGoalProgressForm } from "@/components/goals/update-goal-progress-form";
 import { getGoals, saveGoal, deleteGoal, completeGoal } from './actions';
 import { PageLayout } from "@/components/layout/page-layout";
+import { useAuth } from "@/components/auth/auth-provider";
 
 
 export default function GoalsPage() {
@@ -29,9 +30,12 @@ export default function GoalsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
   const { toast } = useToast();
+  const { getIdToken } = useAuth();
   
   async function fetchGoals() {
     try {
+        const token = await getIdToken();
+        if (!token) throw new Error("Authentication required");
         const dbGoals = await getGoals();
         setGoals(dbGoals as (Goal | MeasurableGoal)[]);
     } catch (error) {

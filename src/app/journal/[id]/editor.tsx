@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { saveJournalEntry, deleteJournalEntry } from '../actions';
+import { useAuth } from "@/components/auth/auth-provider";
 
 const moods = ["😊", "😢", "😠", "😍", "🤔", "😴", "None"];
 
@@ -37,6 +38,8 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
   
   const { toast } = useToast();
   const router = useRouter();
+  const { getIdToken } = useAuth();
+
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -72,6 +75,9 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
     const isNew = currentEntry.id.startsWith('new-');
 
     try {
+        const token = await getIdToken();
+        if (!token) throw new Error("Authentication required");
+
         const savedEntry = await saveJournalEntry(currentEntry);
         toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
         if (isNew) {

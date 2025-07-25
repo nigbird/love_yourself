@@ -58,11 +58,16 @@ export default function RoutinesPage() {
   const [completionStatus, setCompletionStatus] = useState<CompletionStatus>({});
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const { getIdToken } = useAuth();
+
 
   const fetchData = async () => {
+    const token = await getIdToken();
+    if (!token) return;
+
     const [dbRoutines, dbStatus] = await Promise.all([
-        callServerAction(getRoutines, { toast, errorMessage: "Failed to fetch routines" }),
-        callServerAction(getCompletionStatus, { toast, errorMessage: "Failed to fetch completion status" })
+        callServerAction(() => getRoutines(), { toast, errorMessage: "Failed to fetch routines" }),
+        callServerAction(() => getCompletionStatus(), { toast, errorMessage: "Failed to fetch completion status" })
     ]);
     if (dbRoutines) setRoutines(dbRoutines);
     if (dbStatus) setCompletionStatus(dbStatus);

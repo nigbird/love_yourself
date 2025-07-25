@@ -55,8 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        const profile = await getAuthenticatedUserProfile();
-        setDbUser(profile);
+        // Fetch the user profile from your backend when the user is authenticated
+        const token = await user.getIdToken();
+        try {
+            const profile = await getAuthenticatedUserProfile();
+            setDbUser(profile);
+        } catch (error) {
+            console.error("Failed to fetch user profile:", error);
+            setDbUser(null);
+        }
       } else {
         setDbUser(null);
       }

@@ -20,6 +20,7 @@ import CreateWishForm from '@/components/wish/create-wish-form';
 import type { Wish } from '@/domain/entities';
 import { getWishes, saveWish, deleteWish, fulfillWish } from './actions';
 import { PageLayout } from '@/components/layout/page-layout';
+import { useAuth } from '@/components/auth/auth-provider';
 
 
 export default function WishlistPage() {
@@ -27,9 +28,14 @@ export default function WishlistPage() {
   const [editingWish, setEditingWish] = useState<Wish | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
+  const { getIdToken } = useAuth();
+
 
   async function fetchWishes() {
     try {
+        const token = await getIdToken();
+        if (!token) throw new Error("Authentication required");
+
         const dbWishes = await getWishes();
         setWishes(dbWishes as Wish[]);
     } catch (error) {
