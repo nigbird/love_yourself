@@ -42,3 +42,10 @@ export async function getUserRewardPoints() {
     return dbUser.rewardPoints;
 }
 
+export async function getAuthenticatedUserProfile() {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+        return null;
+    }
+    return user;
+}

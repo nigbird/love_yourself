@@ -3,8 +3,7 @@
 
 import { useAuth } from '@/components/auth/auth-provider';
 import { AppLayout } from '@/components/layout/app-layout';
-import { getUserRewardPoints } from '@/app/user/actions';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 const protectedRoutes = ['/routines', '/goals', '/journal', '/analytics', '/wish', '/rewards', '/settings'];
@@ -15,8 +14,7 @@ export function AppClientLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { user, loading } = useAuth();
-  const [points, setPoints] = useState(0);
+  const { user, dbUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -33,17 +31,6 @@ export function AppClientLayout({
       }
     }
   }, [user, loading, router, pathname]);
-  
-  useEffect(() => {
-    async function fetchPoints() {
-      if (user) {
-        const userPoints = await getUserRewardPoints();
-        setPoints(userPoints);
-      }
-    }
-    // Fetch points when user logs in or path changes (e.g. after completing a task)
-    fetchPoints();
-  }, [user, pathname]);
 
   // Don't render layout for auth pages until loading is complete
   if (loading && authRoutes.includes(pathname)) {
@@ -56,7 +43,7 @@ export function AppClientLayout({
   }
 
   return (
-    <AppLayout isLoggedIn={!!user} points={points}>
+    <AppLayout isLoggedIn={!!user} points={dbUser?.rewardPoints ?? 0}>
       {children}
     </AppLayout>
   );

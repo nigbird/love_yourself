@@ -2,13 +2,17 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import type { User } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { onIdTokenChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { Loader2 } from 'lucide-react';
+import type { User } from '@/domain/entities';
+import { getAuthenticatedUserProfile } from '@/app/user/actions';
+
 
 interface AuthContextType {
-  user: User | null;
+  user: FirebaseUser | null;
+  dbUser: User | null;
   loading: boolean;
   getIdToken: () => Promise<string | null>;
 }
@@ -38,7 +42,8 @@ const fetcher = async (url: string, idToken: string, options?: RequestInit) => {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [dbUser, setDbUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getIdToken = async () => {
@@ -49,6 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        const profile = await getAuthenticatedUserProfile();
+        setDbUser(profile);
+      } else {
+        setDbUser(null);
+      }
       setLoading(false);
     });
 
@@ -63,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  return <AuthContext.Provider value={{ user, loading, getIdToken }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, dbUser, loading, getIdToken }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

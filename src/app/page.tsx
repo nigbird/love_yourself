@@ -12,6 +12,7 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface NavItem {
   href: string;
@@ -63,6 +64,9 @@ export default function HomePage() {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
+  const { dbUser } = useAuth();
+  
+  const welcomeMessage = dbUser?.name ? `Hello ${dbUser.name}, let’s bloom slowly` : "Hello love, let’s bloom slowly";
 
   useEffect(() => {
     if (!api) {
@@ -88,7 +92,7 @@ export default function HomePage() {
           transition={{ duration: 0.5 }}
           className="text-4xl md:text-5xl font-bold font-headline text-primary"
         >
-          Hello love, let’s bloom slowly
+          {welcomeMessage}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
