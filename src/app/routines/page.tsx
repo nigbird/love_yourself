@@ -36,15 +36,20 @@ type CompletionStatus = {
     [routineId: string]: string; // Store date string 'YYYY-MM-DD'
 };
 
-async function callServerAction(action: () => Promise<any>, { toast, successMessage }: { toast: any, successMessage: string }) {
+async function callServerAction<T>(action: () => Promise<T>, options: { toast: any; successMessage?: string, errorMessage: string; }): Promise<T | null> {
     try {
-        await action();
-        toast({ title: successMessage });
+        const result = await action();
+        if (options.successMessage) {
+            options.toast({ title: options.successMessage });
+        }
+        return result;
     } catch (error: any) {
-        console.error(error);
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        console.error(options.errorMessage, error);
+        options.toast({ title: "Error", description: error.message, variant: "destructive" });
+        return null;
     }
 }
+
 
 export default function RoutinesPage() {
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -52,25 +57,16 @@ export default function RoutinesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [completionStatus, setCompletionStatus] = useState<CompletionStatus>({});
   const { toast } = useToast();
-  const { getIdToken } = useAuth();
   const [isPending, startTransition] = useTransition();
 
-  const withAuth = async <T,>(action: (headers: HeadersInit) => Promise<T>): Promise<T> => {
-      const token = await getIdToken();
-      if (!token) {
-          throw new Error("Not authenticated");
-      }
-      return action({ 'Authorization': `Bearer ${token}` });
-  };
-  
   const fetchData = async () => {
-        const [dbRoutines, dbStatus] = await Promise.all([
-            getRoutines(),
-            getCompletionStatus()
-        ]);
-        setRoutines(dbRoutines);
-        setCompletionStatus(dbStatus);
-    };
+    const [dbRoutines, dbStatus] = await Promise.all([
+        callServerAction(getRoutines, { toast, errorMessage: "Failed to fetch routines" }),
+        callServerAction(getCompletionStatus, { toast, errorMessage: "Failed to fetch completion status" })
+    ]);
+    if (dbRoutines) setRoutines(dbRoutines);
+    if (dbStatus) setCompletionStatus(dbStatus);
+  };
 
   useEffect(() => {
     fetchData();
@@ -92,6 +88,7 @@ export default function RoutinesPage() {
         await callServerAction(() => saveRoutine(routineData), {
             toast,
             successMessage: editingRoutine ? "Routine Updated!" : "Routine Created!",
+            errorMessage: "Failed to save routine"
         });
         await fetchData();
         setIsFormOpen(false);
@@ -103,7 +100,8 @@ export default function RoutinesPage() {
     startTransition(async () => {
         await callServerAction(() => deleteRoutine(routineId), {
             toast,
-            successMessage: "Routine Deleted"
+            successMessage: "Routine Deleted",
+            errorMessage: "Failed to delete routine"
         });
         setRoutines(routines.filter(r => r.id !== routineId));
     });
@@ -114,9 +112,9 @@ export default function RoutinesPage() {
         await callServerAction(() => markRoutineAsDone(routine), {
             toast,
             successMessage: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
+            errorMessage: "Failed to mark as done"
         });
-        const today = new Date().toISOString().split('T')[0];
-        setCompletionStatus(prev => ({ ...prev, [routine.id]: today }));
+        await fetchData();
     });
   }
 
@@ -125,12 +123,9 @@ export default function RoutinesPage() {
         await callServerAction(() => undoCompletion(routine.id), {
             toast,
             successMessage: `Completion for "${routine.name}" has been removed.`,
+            errorMessage: "Failed to undo completion"
         });
-         setCompletionStatus(prev => {
-            const newStatus = { ...prev };
-            delete newStatus[routine.id];
-            return newStatus;
-        });
+        await fetchData();
     });
   }
 
@@ -142,8 +137,6 @@ export default function RoutinesPage() {
   const today = new Date().toISOString().split('T')[0];
   const completedTodayRoutines = routines.filter(r => completionStatus[r.id] === today);
   const totalPoints = completedTodayRoutines.reduce((sum, r) => sum + r.rewardPoints, 0);
-  const findRoutineById = (id: string) => routines.find(r => r.id === id);
-
 
   return (
     <PageLayout>

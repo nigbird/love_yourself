@@ -30,11 +30,17 @@ export default function GoalsPage() {
   const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
   const { toast } = useToast();
   
-  useEffect(() => {
-    async function fetchGoals() {
-      const dbGoals = await getGoals();
-      setGoals(dbGoals as (Goal | MeasurableGoal)[]);
+  async function fetchGoals() {
+    try {
+        const dbGoals = await getGoals();
+        setGoals(dbGoals as (Goal | MeasurableGoal)[]);
+    } catch (error) {
+        console.error("Failed to fetch goals", error);
+        toast({ title: "Error", description: "Could not fetch your goals.", variant: "destructive" });
     }
+  }
+
+  useEffect(() => {
     fetchGoals();
   }, []);
 
@@ -59,8 +65,7 @@ export default function GoalsPage() {
         const goalData = editingGoal ? { ...data, id: editingGoal.id } : data;
         await saveGoal(goalData);
         
-        const updatedGoals = await getGoals();
-        setGoals(updatedGoals as (Goal | MeasurableGoal)[]);
+        await fetchGoals();
 
         toast({ title: editingGoal ? "Goal Updated!" : "Goal Created!", description: `"${data.name}" has been saved.` });
         setIsFormOpen(false);
@@ -80,8 +85,7 @@ export default function GoalsPage() {
       };
       await saveGoal(updatedGoalData);
 
-      const updatedGoals = await getGoals();
-      setGoals(updatedGoals as (Goal | MeasurableGoal)[]);
+      await fetchGoals();
 
       toast({ title: "Progress Updated!", description: `Your progress for "${editingGoal.name}" has been updated.` });
       setIsUpdateFormOpen(false);

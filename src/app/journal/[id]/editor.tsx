@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getJournalEntry, saveJournalEntry, deleteJournalEntry } from '../actions';
+import { saveJournalEntry, deleteJournalEntry } from '../actions';
 
 const moods = ["😊", "😢", "😠", "😍", "🤔", "😴", "None"];
 
@@ -73,10 +73,12 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
 
     try {
         const savedEntry = await saveJournalEntry(currentEntry);
-        setCurrentEntry(savedEntry as JournalEntry);
         toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
         if (isNew) {
             router.replace(`/journal/${savedEntry.id}`);
+            // We don't need to manually update state, the redirect will cause a re-fetch
+        } else {
+            setCurrentEntry(savedEntry as JournalEntry);
         }
     } catch (error) {
         console.error("Failed to save entry:", error);

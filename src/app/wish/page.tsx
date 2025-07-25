@@ -28,12 +28,17 @@ export default function WishlistPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
 
-   // Load data from db on mount
-  useEffect(() => {
-    async function fetchWishes() {
-      const dbWishes = await getWishes();
-      setWishes(dbWishes as Wish[]);
+  async function fetchWishes() {
+    try {
+        const dbWishes = await getWishes();
+        setWishes(dbWishes as Wish[]);
+    } catch (error) {
+        console.error("Failed to fetch wishes", error);
+        toast({ title: "Error", description: "Could not fetch your wishes.", variant: "destructive" });
     }
+  }
+
+  useEffect(() => {
     fetchWishes();
   }, []);
 
@@ -53,8 +58,7 @@ export default function WishlistPage() {
       const wishData = editingWish ? { ...data, id: editingWish.id } : data;
       await saveWish(wishData);
 
-      const updatedWishes = await getWishes();
-      setWishes(updatedWishes as Wish[]);
+      await fetchWishes();
 
       toast({ title: editingWish ? "Wish Updated!" : "Wish Added!", description: `"${data.title}" has been saved.` });
       setIsFormOpen(false);
