@@ -5,32 +5,46 @@ import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import type { RedeemableReward } from '@prisma/client';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
+import { headers } from 'next/headers';
+import { adminAuth } from '@/lib/firebase/admin';
 
-const getUserId = async () => {
-    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
-    if (!user) throw new Error("User not found");
-    return user.id;
+async function getAuthenticatedUser() {
+    const authorization = headers().get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    
+    try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const user = await prisma.user.findUnique({
+            where: { id: decodedToken.uid },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        return null;
+    }
 }
 
 export async function getUserRewardPoints() {
-    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
-    if (!user) throw new Error("User not found");
+    const user = await getAuthenticatedUser();
+    if (!user) return 0;
     return user.rewardPoints;
 }
 
 
 export async function getPointsHistory() {
-    const userId = await getUserId();
-    const user = await prisma.user.findUnique({ where: { id: userId }});
-    if (!user) throw new Error("User not found");
+    const user = await getAuthenticatedUser();
+    if (!user) return { totalPoints: 0, history: [] };
 
     const routineLogs = await prisma.routineCompletionLog.findMany({
-        where: { userId },
+        where: { userId: user.id },
         orderBy: { completedAt: 'desc' },
     });
 
     const goalLogs = await prisma.goalCompletionLog.findMany({
-        where: { userId },
+        where: { userId: user.id },
         orderBy: { completedAt: 'desc' },
     });
 
@@ -72,26 +86,28 @@ export async function getPointsHistory() {
 
 
 export async function getRedeemableRewards() {
-    const userId = await getUserId();
+    const user = await getAuthenticatedUser();
+    if (!user) return [];
     return prisma.redeemableReward.findMany({
-        where: { userId },
+        where: { userId: user.id },
         orderBy: { cost: 'asc' },
     });
 }
 
 export async function saveReward(reward: Omit<RedeemableReward, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = reward;
-  const userId = await getUserId();
+  const user = await getAuthenticatedUser();
+  if (!user) throw new Error("User not authenticated");
   
   const rewardData = {
     ...data,
     cost: Number(data.cost),
-    userId,
+    userId: user.id,
   };
 
   if (id) {
     await prisma.redeemableReward.update({
-      where: { id },
+      where: { id, userId: user.id },
       data: rewardData,
     });
   } else {
@@ -104,16 +120,17 @@ export async function saveReward(reward: Omit<RedeemableReward, 'userId' | 'crea
 }
 
 export async function deleteReward(id: string) {
+    const user = await getAuthenticatedUser();
+    if (!user) throw new Error("User not authenticated");
     await prisma.redeemableReward.delete({
-        where: { id },
+        where: { id, userId: user.id },
     });
     revalidatePath('/rewards');
 }
 
 export async function redeemReward(reward: RedeemableReward) {
-    const userId = await getUserId();
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new Error("User not found");
+    const user = await getAuthenticatedUser();
+    if (!user) throw new Error("User not authenticated");
 
     if (user.rewardPoints < reward.cost) {
         throw new Error("Not enough points");
@@ -122,14 +139,14 @@ export async function redeemReward(reward: RedeemableReward) {
     await prisma.$transaction(async (tx) => {
         // Decrement user points
         await tx.user.update({
-            where: { id: userId },
+            where: { id: user.id },
             data: { rewardPoints: { decrement: reward.cost } },
         });
 
         // Create redemption log
         await tx.rewardRedemptionLog.create({
             data: {
-                userId,
+                userId: user.id,
                 rewardId: reward.id,
                 rewardTitle: reward.title,
                 pointsSpent: reward.cost,

@@ -4,9 +4,33 @@
 import { revalidatePath } from 'next/cache';
 import type { Goal, MeasurableGoal } from '@/domain/entities';
 import { prisma } from '@/lib/db';
+import { headers } from 'next/headers';
+import { adminAuth } from '@/lib/firebase/admin';
+
+async function getAuthenticatedUser() {
+    const authorization = headers().get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    
+    try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const user = await prisma.user.findUnique({
+            where: { id: decodedToken.uid },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        return null;
+    }
+}
 
 export async function getGoals() {
+  const user = await getAuthenticatedUser();
+  if (!user) return [];
   return prisma.goal.findMany({
+    where: { userId: user.id },
     orderBy: {
       createdAt: 'desc',
     },
@@ -15,11 +39,9 @@ export async function getGoals() {
 
 export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = goal;
-  const userId = 'user@example.com'; // In a real app, this would come from authentication
-
-  const user = await prisma.user.findUnique({ where: { email: userId } });
+  const user = await getAuthenticatedUser();
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("User not authenticated");
   }
   
   const goalData = {
@@ -34,7 +56,7 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'cre
 
   if (id) {
     await prisma.goal.update({
-      where: { id },
+      where: { id, userId: user.id },
       data: goalData,
     });
   } else {
@@ -48,18 +70,17 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'cre
 
 
 export async function deleteGoal(id: string) {
+  const user = await getAuthenticatedUser();
+  if (!user) throw new Error("User not authenticated");
   await prisma.goal.delete({
-    where: { id },
+    where: { id, userId: user.id },
   });
   revalidatePath('/goals');
 }
 
 export async function completeGoal(goal: Goal | MeasurableGoal) {
-  const userId = 'user@example.com';
-  const user = await prisma.user.findUnique({ where: { email: userId } });
-  if (!user) {
-    throw new Error("User not found");
-  }
+  const user = await getAuthenticatedUser();
+  if (!user) throw new Error("User not authenticated");
 
   await prisma.$transaction(async (tx) => {
     // 1. Create a log entry for the completed goal
@@ -86,7 +107,7 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
 
     // 3. Delete the original goal
     await tx.goal.delete({
-      where: { id: goal.id },
+      where: { id: goal.id, userId: user.id },
     });
   });
 
@@ -96,8 +117,7 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
 }
 
 export async function getCompletedGoals() {
-    const userId = 'user@example.com';
-    const user = await prisma.user.findUnique({ where: { email: userId } });
+    const user = await getAuthenticatedUser();
     if (!user) {
         return [];
     }

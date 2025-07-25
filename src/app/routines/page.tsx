@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { getRoutines, saveRoutine, deleteRoutine, markRoutineAsDone, getCompletionStatus, undoCompletion } from './actions';
 import { PageLayout } from '@/components/layout/page-layout';
+import { useAuth } from '@/components/auth/auth-provider';
 
 const weekDays = [
     { label: 'S', value: '0' },
@@ -35,23 +36,43 @@ type CompletionStatus = {
     [routineId: string]: string; // Store date string 'YYYY-MM-DD'
 };
 
+async function callServerAction(action: () => Promise<any>, { toast, successMessage }: { toast: any, successMessage: string }) {
+    try {
+        await action();
+        toast({ title: successMessage });
+    } catch (error: any) {
+        console.error(error);
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+}
+
 export default function RoutinesPage() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [completionStatus, setCompletionStatus] = useState<CompletionStatus>({});
-  
   const { toast } = useToast();
+  const { getIdToken } = useAuth();
+  const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    async function fetchData() {
+  const withAuth = async <T,>(action: (headers: HeadersInit) => Promise<T>): Promise<T> => {
+      const token = await getIdToken();
+      if (!token) {
+          throw new Error("Not authenticated");
+      }
+      return action({ 'Authorization': `Bearer ${token}` });
+  };
+  
+  const fetchData = async () => {
         const [dbRoutines, dbStatus] = await Promise.all([
             getRoutines(),
             getCompletionStatus()
         ]);
         setRoutines(dbRoutines);
         setCompletionStatus(dbStatus);
-    }
+    };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -66,64 +87,51 @@ export default function RoutinesPage() {
   }
 
   const handleFormSubmit = async (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
-    try {
+    startTransition(async () => {
         const routineData = editingRoutine ? { ...data, id: editingRoutine.id } : data;
-        await saveRoutine(routineData);
-
-        const updatedRoutines = await getRoutines();
-        setRoutines(updatedRoutines);
-        
-        toast({ title: editingRoutine ? "Routine Updated!" : "Routine Created!", description: `"${data.name}" has been saved.` });
+        await callServerAction(() => saveRoutine(routineData), {
+            toast,
+            successMessage: editingRoutine ? "Routine Updated!" : "Routine Created!",
+        });
+        await fetchData();
         setIsFormOpen(false);
         setEditingRoutine(null);
-    } catch (error) {
-        console.error("Failed to save routine:", error);
-        toast({ title: "Error", description: "Could not save the routine.", variant: "destructive" });
-    }
+    });
   };
 
   const handleDeleteRoutine = async (routineId: string) => {
-    try {
-        await deleteRoutine(routineId);
+    startTransition(async () => {
+        await callServerAction(() => deleteRoutine(routineId), {
+            toast,
+            successMessage: "Routine Deleted"
+        });
         setRoutines(routines.filter(r => r.id !== routineId));
-        toast({ title: "Routine Deleted", variant: 'destructive' });
-    } catch (error) {
-        console.error("Failed to delete routine:", error);
-        toast({ title: "Error", description: "Could not delete the routine.", variant: "destructive" });
-    }
+    });
   }
 
   const handleMarkAsDone = async (routine: Routine) => {
-    try {
-        await markRoutineAsDone(routine);
+    startTransition(async () => {
+        await callServerAction(() => markRoutineAsDone(routine), {
+            toast,
+            successMessage: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
+        });
         const today = new Date().toISOString().split('T')[0];
         setCompletionStatus(prev => ({ ...prev, [routine.id]: today }));
-        toast({
-          title: "Routine Complete!",
-          description: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
-        });
-    } catch (error) {
-        console.error("Failed to mark as done:", error);
-        toast({ title: "Error", description: "Could not complete the routine.", variant: "destructive" });
-    }
+    });
   }
 
   const handleUndoCompletion = async (routine: Routine) => {
-    try {
-      await undoCompletion(routine.id);
-      setCompletionStatus(prev => {
-        const newStatus = { ...prev };
-        delete newStatus[routine.id];
-        return newStatus;
-      });
-       toast({
-          title: "Completion Undone",
-          description: `The completion for "${routine.name}" has been removed.`,
+    startTransition(async () => {
+        await callServerAction(() => undoCompletion(routine.id), {
+            toast,
+            successMessage: `Completion for "${routine.name}" has been removed.`,
         });
-    } catch (error) {
-      console.error("Failed to undo completion:", error);
-      toast({ title: "Error", description: "Could not undo the completion.", variant: "destructive" });
-    }
+         setCompletionStatus(prev => {
+            const newStatus = { ...prev };
+            delete newStatus[routine.id];
+            return newStatus;
+        });
+    });
   }
 
   const isCompletedToday = (routineId: string) => {
@@ -184,7 +192,7 @@ export default function RoutinesPage() {
                                     <span className="text-foreground/80 truncate pr-2">{r.name}</span>
                                     <div className="flex items-center gap-2 flex-shrink-0">
                                       <span className="font-bold text-accent">+{r.rewardPoints}pts</span>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleUndoCompletion(r)}>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleUndoCompletion(r)} disabled={isPending}>
                                         <Undo2 className="h-4 w-4" />
                                       </Button>
                                     </div>
@@ -230,7 +238,7 @@ export default function RoutinesPage() {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteRoutine(routine.id)}>Continue</AlertDialogAction>
+                                        <AlertDialogAction onClick={() => handleDeleteRoutine(routine.id)} disabled={isPending}>Continue</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
@@ -258,7 +266,7 @@ export default function RoutinesPage() {
                     <CardFooter>
                          <Button 
                             onClick={() => handleMarkAsDone(routine)} 
-                            disabled={isCompletedToday(routine.id)}
+                            disabled={isCompletedToday(routine.id) || isPending}
                             className="w-full"
                         >
                             <Zap className="mr-2"/>

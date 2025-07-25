@@ -4,29 +4,47 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { startOfToday } from 'date-fns';
+import { headers } from 'next/headers';
+import { adminAuth } from '@/lib/firebase/admin';
 
-const getUserId = async () => {
-    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
-    if (!user) throw new Error("User not found");
-    return user.id;
+async function getAuthenticatedUser() {
+    const authorization = headers().get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    
+    try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const user = await prisma.user.findUnique({
+            where: { id: decodedToken.uid },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        return null;
+    }
 }
 
 export async function getUnreadNotifications() {
-    const userId = await getUserId();
+    const user = await getAuthenticatedUser();
+    if (!user) return { notifications: [], count: 0 };
+
     const notifications = await prisma.notification.findMany({
-        where: { userId, read: false },
+        where: { userId: user.id, read: false },
         orderBy: { createdAt: 'desc' },
     });
     const count = await prisma.notification.count({
-        where: { userId, read: false },
+        where: { userId: user.id, read: false },
     });
     return { notifications, count };
 }
 
 export async function markAllNotificationsAsRead() {
-    const userId = await getUserId();
+    const user = await getAuthenticatedUser();
+    if (!user) return;
     await prisma.notification.updateMany({
-        where: { userId, read: false },
+        where: { userId: user.id, read: false },
         data: { read: true },
     });
     revalidatePath('/'); // Revalidate all pages to update notification count
@@ -36,12 +54,10 @@ export async function createReminderNotification(routineId: string) {
     const routine = await prisma.routine.findUnique({ where: { id: routineId } });
     if (!routine) throw new Error("Routine not found");
 
-    const message = `It's time for your "${routine.name}" routine!`;
-
     await prisma.notification.create({
         data: {
             userId: routine.userId,
-            message: message,
+            message: `It's time for your "${routine.name}" routine!`,
             url: '/routines'
         }
     });
@@ -51,11 +67,13 @@ export async function createReminderNotification(routineId: string) {
 
 // This function is used by the reminder provider to get necessary routine data efficiently
 export async function getRoutinesForReminders() {
-    const userId = await getUserId();
+    const user = await getAuthenticatedUser();
+    if (!user) return [];
+    
     const today = startOfToday();
     
     const routines = await prisma.routine.findMany({
-        where: { userId: userId, remindersEnabled: true },
+        where: { userId: user.id, remindersEnabled: true },
         select: {
             id: true,
             name: true,
@@ -68,7 +86,7 @@ export async function getRoutinesForReminders() {
 
     const completionLogs = await prisma.routineCompletionLog.findMany({
         where: {
-            userId: userId,
+            userId: user.id,
             routineId: {
                 in: routines.map(r => r.id)
             },

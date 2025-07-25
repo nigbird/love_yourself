@@ -1,6 +1,7 @@
 
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
 
 // Check if Firebase has been initialized
 if (!admin.apps.length) {
@@ -17,7 +18,7 @@ if (!admin.apps.length) {
   });
 }
 
-const adminAuth = admin.auth();
+const adminAuth = getAuth();
 const adminDb = admin.firestore();
 
 export { adminAuth, adminDb };

@@ -4,9 +4,33 @@
 import { revalidatePath } from 'next/cache';
 import type { JournalEntry } from '@/domain/entities';
 import { prisma } from '@/lib/db';
+import { headers } from 'next/headers';
+import { adminAuth } from '@/lib/firebase/admin';
+
+async function getAuthenticatedUser() {
+    const authorization = headers().get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    
+    try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const user = await prisma.user.findUnique({
+            where: { id: decodedToken.uid },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        return null;
+    }
+}
 
 export async function getJournalEntries() {
+  const user = await getAuthenticatedUser();
+  if (!user) return [];
   return prisma.journalEntry.findMany({
+    where: { userId: user.id },
     orderBy: {
       createdAt: 'desc',
     },
@@ -14,18 +38,18 @@ export async function getJournalEntries() {
 }
 
 export async function getJournalEntry(id: string) {
+    const user = await getAuthenticatedUser();
+    if (!user) return null;
     return prisma.journalEntry.findUnique({
-        where: { id }
+        where: { id, userId: user.id }
     });
 }
 
 export async function saveJournalEntry(entry: Omit<JournalEntry, 'userId' | 'createdAt' | 'updatedAt'> & { id: string }) {
     const isNew = entry.id.startsWith('new-');
-    const userId = 'user@example.com'; // In a real app, this would come from authentication
-
-    const user = await prisma.user.findUnique({ where: { email: userId } });
+    const user = await getAuthenticatedUser();
     if (!user) {
-        throw new Error("User not found");
+        throw new Error("User not authenticated");
     }
 
     const data = {
@@ -47,7 +71,7 @@ export async function saveJournalEntry(entry: Omit<JournalEntry, 'userId' | 'cre
         } });
     } else {
         savedEntry = await prisma.journalEntry.update({
-            where: { id: entry.id },
+            where: { id: entry.id, userId: user.id },
             data,
         });
     }
@@ -60,8 +84,10 @@ export async function saveJournalEntry(entry: Omit<JournalEntry, 'userId' | 'cre
 
 
 export async function deleteJournalEntry(id: string) {
+  const user = await getAuthenticatedUser();
+  if (!user) throw new Error("User not authenticated");
   await prisma.journalEntry.delete({
-    where: { id },
+    where: { id, userId: user.id },
   });
   revalidatePath('/journal');
 }

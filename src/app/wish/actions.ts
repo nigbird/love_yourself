@@ -4,9 +4,33 @@
 import { revalidatePath } from 'next/cache';
 import type { Wish } from '@/domain/entities';
 import { prisma } from '@/lib/db';
+import { headers } from 'next/headers';
+import { adminAuth } from '@/lib/firebase/admin';
+
+async function getAuthenticatedUser() {
+    const authorization = headers().get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    
+    try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const user = await prisma.user.findUnique({
+            where: { id: decodedToken.uid },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        return null;
+    }
+}
 
 export async function getWishes() {
+  const user = await getAuthenticatedUser();
+  if (!user) return [];
   return prisma.wish.findMany({
+    where: { userId: user.id },
     orderBy: {
       createdAt: 'desc',
     },
@@ -15,11 +39,9 @@ export async function getWishes() {
 
 export async function saveWish(wish: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = wish;
-  const userId = 'user@example.com'; // In a real app, this would come from authentication
-
-  const user = await prisma.user.findUnique({ where: { email: userId } });
+  const user = await getAuthenticatedUser();
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("User not authenticated");
   }
 
   const wishData = {
@@ -29,7 +51,7 @@ export async function saveWish(wish: Omit<Wish, 'id' | 'userId' | 'createdAt' | 
 
   if (id) {
     await prisma.wish.update({
-      where: { id },
+      where: { id, userId: user.id },
       data: wishData,
     });
   } else {
@@ -43,17 +65,18 @@ export async function saveWish(wish: Omit<Wish, 'id' | 'userId' | 'createdAt' | 
 
 
 export async function deleteWish(id: string) {
+  const user = await getAuthenticatedUser();
+  if (!user) throw new Error("User not authenticated");
   await prisma.wish.delete({
-    where: { id },
+    where: { id, userId: user.id },
   });
   revalidatePath('/wish');
 }
 
 export async function fulfillWish(wish: Wish) {
-  const userId = 'user@example.com';
-  const user = await prisma.user.findUnique({ where: { email: userId } });
+  const user = await getAuthenticatedUser();
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("User not authenticated");
   }
 
   // Create a log entry for the fulfilled wish
@@ -70,7 +93,7 @@ export async function fulfillWish(wish: Wish) {
 
   // Delete the original wish
   await prisma.wish.delete({
-    where: { id: wish.id },
+    where: { id: wish.id, userId: user.id },
   });
 
   revalidatePath('/wish');
@@ -78,8 +101,7 @@ export async function fulfillWish(wish: Wish) {
 }
 
 export async function getFulfilledWishes() {
-    const userId = 'user@example.com';
-    const user = await prisma.user.findUnique({ where: { email: userId } });
+    const user = await getAuthenticatedUser();
     if (!user) {
         return [];
     }

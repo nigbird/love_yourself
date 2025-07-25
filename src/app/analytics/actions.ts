@@ -3,17 +3,34 @@
 
 import { prisma } from '@/lib/db';
 import { subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, format } from 'date-fns';
+import { headers } from 'next/headers';
+import { adminAuth } from '@/lib/firebase/admin';
 
 type TimeRange = 'weekly' | 'monthly' | 'yearly';
 
-const getUserId = async () => {
-    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
-    if (!user) throw new Error("User not found");
-    return user.id;
+async function getAuthenticatedUser() {
+    const authorization = headers().get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    
+    try {
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const user = await prisma.user.findUnique({
+            where: { id: decodedToken.uid },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error verifying auth token:", error);
+        return null;
+    }
 }
 
 export const getAnalyticsData = async (timeRange: TimeRange) => {
-    const userId = await getUserId();
+    const user = await getAuthenticatedUser();
+    if (!user) return { routines: [], goals: [] };
+
     const now = new Date();
     
     let startDate: Date;
@@ -39,14 +56,14 @@ export const getAnalyticsData = async (timeRange: TimeRange) => {
     const [routineLogs, goalLogs] = await Promise.all([
         prisma.routineCompletionLog.findMany({
             where: {
-                userId,
+                userId: user.id,
                 completedAt: { gte: startDate, lte: endDate }
             },
             orderBy: { completedAt: 'asc' }
         }),
         prisma.goalCompletionLog.findMany({
             where: {
-                userId,
+                userId: user.id,
                 completedAt: { gte: startDate, lte: endDate }
             },
             orderBy: { completedAt: 'asc' }

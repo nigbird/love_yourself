@@ -41,8 +41,9 @@ export function AppClientLayout({
         setPoints(userPoints);
       }
     }
+    // Fetch points when user logs in or path changes (e.g. after completing a task)
     fetchPoints();
-  }, [user]);
+  }, [user, pathname]);
 
   // Don't render layout for auth pages until loading is complete
   if (loading && authRoutes.includes(pathname)) {
