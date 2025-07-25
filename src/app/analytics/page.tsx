@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Gift, Loader2 } from "lucide-react";
 import { getAnalyticsData } from './actions';
 import { PageLayout } from "@/components/layout/page-layout";
+import { useAuth } from "@/components/auth/auth-provider";
 
 type ChartData = { name: string; completed: number; tooltip: string; }[];
 
@@ -22,14 +23,20 @@ export default function AnalyticsPage() {
   const [fulfilledWishes, setFulfilledWishes] = useState<WishFulfillmentLog[]>([]);
   const [chartData, setChartData] = useState<{ routines: ChartData; goals: ChartData } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { getIdToken } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
+      const token = await getIdToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
       const [goals, wishes, analytics] = await Promise.all([
-        getCompletedGoals(),
-        getFulfilledWishes(),
-        getAnalyticsData(timeRange)
+        getCompletedGoals(token),
+        getFulfilledWishes(token),
+        getAnalyticsData(token, timeRange)
       ]);
       setCompletedGoals(goals);
       setFulfilledWishes(wishes);
@@ -37,7 +44,7 @@ export default function AnalyticsPage() {
       setIsLoading(false);
     }
     fetchData();
-  }, [timeRange]);
+  }, [timeRange, getIdToken]);
 
   return (
     <PageLayout>

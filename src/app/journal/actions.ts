@@ -7,12 +7,10 @@ import { prisma } from '@/lib/db';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -26,8 +24,8 @@ async function getAuthenticatedUser() {
     }
 }
 
-export async function getJournalEntries() {
-  const user = await getAuthenticatedUser();
+export async function getJournalEntries(idToken: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) return [];
   return prisma.journalEntry.findMany({
     where: { userId: user.id },
@@ -37,17 +35,17 @@ export async function getJournalEntries() {
   });
 }
 
-export async function getJournalEntry(id: string) {
-    const user = await getAuthenticatedUser();
+export async function getJournalEntry(idToken: string, id: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return null;
     return prisma.journalEntry.findUnique({
         where: { id, userId: user.id }
     });
 }
 
-export async function saveJournalEntry(entry: Omit<JournalEntry, 'userId' | 'createdAt' | 'updatedAt'> & { id: string }) {
+export async function saveJournalEntry(idToken: string, entry: Omit<JournalEntry, 'userId' | 'createdAt' | 'updatedAt'> & { id: string }) {
     const isNew = entry.id.startsWith('new-');
-    const user = await getAuthenticatedUser();
+    const user = await getAuthenticatedUser(idToken);
     if (!user) {
         throw new Error("User not authenticated");
     }
@@ -83,8 +81,8 @@ export async function saveJournalEntry(entry: Omit<JournalEntry, 'userId' | 'cre
 }
 
 
-export async function deleteJournalEntry(id: string) {
-  const user = await getAuthenticatedUser();
+export async function deleteJournalEntry(idToken: string, id: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) throw new Error("User not authenticated");
   await prisma.journalEntry.delete({
     where: { id, userId: user.id },

@@ -78,7 +78,7 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
         const token = await getIdToken();
         if (!token) throw new Error("Authentication required");
 
-        const savedEntry = await saveJournalEntry(currentEntry);
+        const savedEntry = await saveJournalEntry(token, currentEntry);
         toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
         if (isNew) {
             router.replace(`/journal/${savedEntry.id}`);
@@ -96,8 +96,13 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
 
   const handleDeleteEntry = async () => {
       if (!currentEntry || currentEntry.id.startsWith('new-')) return;
+      const token = await getIdToken();
+      if (!token) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+      }
       try {
-        await deleteJournalEntry(currentEntry.id);
+        await deleteJournalEntry(token, currentEntry.id);
         toast({ title: "Entry Deleted", variant: 'destructive' });
         router.push('/journal');
       } catch (error) {

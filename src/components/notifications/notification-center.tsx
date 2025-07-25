@@ -13,15 +13,23 @@ import { getUnreadNotifications, markAllNotificationsAsRead } from '@/app/notifi
 import type { Notification } from '@prisma/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { useAuth } from '../auth/auth-provider';
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [count, setCount] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const { getIdToken } = useAuth();
 
   const fetchNotifications = async () => {
-    const { notifications, count } = await getUnreadNotifications();
+    const token = await getIdToken();
+    if (!token) {
+        setNotifications([]);
+        setCount(0);
+        return;
+    }
+    const { notifications, count } = await getUnreadNotifications(token);
     setNotifications(notifications);
     setCount(count);
   };
@@ -31,18 +39,20 @@ export function NotificationCenter() {
     if (isOpen) {
       fetchNotifications();
     }
-  }, [isOpen]);
+  }, [isOpen, getIdToken]);
   
   // Also fetch periodically while app is open
   useEffect(() => {
       fetchNotifications(); // initial fetch
       const interval = setInterval(fetchNotifications, 60000); // every minute
       return () => clearInterval(interval);
-  }, []);
+  }, [getIdToken]);
 
   const handleMarkAsRead = () => {
     startTransition(async () => {
-      await markAllNotificationsAsRead();
+      const token = await getIdToken();
+      if (!token) return;
+      await markAllNotificationsAsRead(token);
       await fetchNotifications();
     });
   };

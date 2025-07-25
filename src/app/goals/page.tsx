@@ -36,7 +36,7 @@ export default function GoalsPage() {
     try {
         const token = await getIdToken();
         if (!token) throw new Error("Authentication required");
-        const dbGoals = await getGoals();
+        const dbGoals = await getGoals(token);
         setGoals(dbGoals as (Goal | MeasurableGoal)[]);
     } catch (error) {
         console.error("Failed to fetch goals", error);
@@ -65,9 +65,14 @@ export default function GoalsPage() {
   }
 
   const handleFormSubmit = async (data: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to save a goal.", variant: "destructive" });
+        return;
+    }
     try {
         const goalData = editingGoal ? { ...data, id: editingGoal.id } : data;
-        await saveGoal(goalData);
+        await saveGoal(token, goalData);
         
         await fetchGoals();
 
@@ -81,13 +86,18 @@ export default function GoalsPage() {
   };
 
   const handleUpdateProgressSubmit = async (data: { currentValue: number }) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to update progress.", variant: "destructive" });
+        return;
+    }
     if (!editingGoal) return;
     try {
       const updatedGoalData = {
         ...editingGoal,
         currentValue: data.currentValue,
       };
-      await saveGoal(updatedGoalData);
+      await saveGoal(token, updatedGoalData);
 
       await fetchGoals();
 
@@ -101,8 +111,13 @@ export default function GoalsPage() {
   };
 
   const handleDeleteGoal = async (goalId: string) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to delete a goal.", variant: "destructive" });
+        return;
+    }
     try {
-        await deleteGoal(goalId);
+        await deleteGoal(token, goalId);
         setGoals(goals.filter(g => g.id !== goalId));
         toast({ title: "Goal Deleted", variant: 'destructive' });
     } catch (error) {
@@ -112,8 +127,13 @@ export default function GoalsPage() {
   }
 
   const handleCompleteGoal = async (goal: Goal | MeasurableGoal) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to complete a goal.", variant: "destructive" });
+        return;
+    }
     try {
-        await completeGoal(goal);
+        await completeGoal(token, goal);
         setGoals(goals.filter(g => g.id !== goal.id));
         toast({ title: "Goal Completed!", description: `Congratulations on achieving "${goal.name}"! You've earned ${goal.rewardPoints} points.` });
     } catch (error) {

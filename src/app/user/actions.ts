@@ -5,12 +5,10 @@ import { prisma } from '@/lib/db';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -25,8 +23,8 @@ async function getAuthenticatedUser() {
 }
 
 
-export async function getUserRewardPoints() {
-    const user = await getAuthenticatedUser();
+export async function getUserRewardPoints(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) {
         return 0;
     }
@@ -42,8 +40,8 @@ export async function getUserRewardPoints() {
     return dbUser.rewardPoints;
 }
 
-export async function getAuthenticatedUserProfile() {
-    const user = await getAuthenticatedUser();
+export async function getAuthenticatedUserProfile(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) {
         return null;
     }

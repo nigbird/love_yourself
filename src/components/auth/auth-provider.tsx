@@ -19,28 +19,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// This function will be called by client components that need to make authorized API calls
-const fetcher = async (url: string, idToken: string, options?: RequestInit) => {
-    const res = await fetch(url, {
-        ...options,
-        headers: {
-            ...options?.headers,
-            'Authorization': `Bearer ${idToken}`
-        }
-    });
-    if (!res.ok) {
-        const error = new Error('An error occurred while fetching the data.');
-        // Attach extra info to the error object.
-        try {
-            error.message = (await res.json()).error || error.message;
-        } catch (e) {
-            // Not a JSON response
-        }
-        throw error;
-    }
-    return res.json();
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [dbUser, setDbUser] = useState<User | null>(null);
@@ -58,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fetch the user profile from your backend when the user is authenticated
         const token = await user.getIdToken();
         try {
-            const profile = await getAuthenticatedUserProfile();
+            const profile = await getAuthenticatedUserProfile(token);
             setDbUser(profile);
         } catch (error) {
             console.error("Failed to fetch user profile:", error);
@@ -90,19 +68,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-// Wrapper for client-side data fetching
-export function useAuthorizedFetcher() {
-    const { getIdToken } = useAuth();
-    
-    const authorizedFetcher = async (url: string, options?: RequestInit) => {
-        const token = await getIdToken();
-        if (!token) {
-            throw new Error("User not authenticated.");
-        }
-        return fetcher(url, token, options);
-    };
-
-    return authorizedFetcher;
 }

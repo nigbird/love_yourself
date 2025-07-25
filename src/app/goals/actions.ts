@@ -7,12 +7,10 @@ import { prisma } from '@/lib/db';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -26,8 +24,8 @@ async function getAuthenticatedUser() {
     }
 }
 
-export async function getGoals() {
-  const user = await getAuthenticatedUser();
+export async function getGoals(idToken: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) return [];
   return prisma.goal.findMany({
     where: { userId: user.id },
@@ -37,9 +35,9 @@ export async function getGoals() {
   });
 }
 
-export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
+export async function saveGoal(idToken: string, goal: Omit<Goal | MeasurableGoal, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = goal;
-  const user = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser(idToken);
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -69,8 +67,8 @@ export async function saveGoal(goal: Omit<Goal | MeasurableGoal, 'userId' | 'cre
 }
 
 
-export async function deleteGoal(id: string) {
-  const user = await getAuthenticatedUser();
+export async function deleteGoal(idToken: string, id: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) throw new Error("User not authenticated");
   await prisma.goal.delete({
     where: { id, userId: user.id },
@@ -78,8 +76,8 @@ export async function deleteGoal(id: string) {
   revalidatePath('/goals');
 }
 
-export async function completeGoal(goal: Goal | MeasurableGoal) {
-  const user = await getAuthenticatedUser();
+export async function completeGoal(idToken: string, goal: Goal | MeasurableGoal) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) throw new Error("User not authenticated");
 
   await prisma.$transaction(async (tx) => {
@@ -116,8 +114,8 @@ export async function completeGoal(goal: Goal | MeasurableGoal) {
   revalidatePath('/'); // Revalidate root layout for points update
 }
 
-export async function getCompletedGoals() {
-    const user = await getAuthenticatedUser();
+export async function getCompletedGoals(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) {
         return [];
     }

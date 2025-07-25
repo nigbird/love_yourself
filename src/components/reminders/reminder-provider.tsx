@@ -6,6 +6,7 @@ import { useSettings } from '@/hooks/use-settings';
 import { useToast } from '@/hooks/use-toast';
 import { getRoutinesForReminders, createReminderNotification } from '@/app/notifications/actions';
 import type { Routine } from '@prisma/client';
+import { useAuth } from '../auth/auth-provider';
 
 type RoutineForReminder = Pick<Routine, 'id' | 'name' | 'frequency' | 'daysOfWeek' | 'timeOfDay' | 'remindersEnabled'> & {
     isCompletedToday: boolean;
@@ -15,6 +16,7 @@ type RoutineForReminder = Pick<Routine, 'id' | 'name' | 'frequency' | 'daysOfWee
 export function ReminderProvider({ children }: { children: React.ReactNode }) {
   const { soundEnabled } = useSettings();
   const { toast } = useToast();
+  const { getIdToken } = useAuth();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const remindersSentThisSession = useRef<Set<string>>(new Set());
 
@@ -34,12 +36,15 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
   }, [soundEnabled]);
 
   const checkReminders = useCallback(async () => {
+    const token = await getIdToken();
+    if (!token) return;
+
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const dayOfWeek = now.getDay();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    const routines = await getRoutinesForReminders();
+    const routines = await getRoutinesForReminders(token);
 
     for (const routine of routines) {
       if (!routine.timeOfDay || !routine.remindersEnabled || routine.isCompletedToday) {
@@ -74,7 +79,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [playNotificationSound, toast]);
+  }, [playNotificationSound, toast, getIdToken]);
 
   useEffect(() => {
     // Check reminders immediately on load, then every minute

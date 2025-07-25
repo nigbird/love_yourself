@@ -66,8 +66,8 @@ export default function RoutinesPage() {
     if (!token) return;
 
     const [dbRoutines, dbStatus] = await Promise.all([
-        callServerAction(() => getRoutines(), { toast, errorMessage: "Failed to fetch routines" }),
-        callServerAction(() => getCompletionStatus(), { toast, errorMessage: "Failed to fetch completion status" })
+        callServerAction(() => getRoutines(token), { toast, errorMessage: "Failed to fetch routines" }),
+        callServerAction(() => getCompletionStatus(token), { toast, errorMessage: "Failed to fetch completion status" })
     ]);
     if (dbRoutines) setRoutines(dbRoutines);
     if (dbStatus) setCompletionStatus(dbStatus);
@@ -88,9 +88,14 @@ export default function RoutinesPage() {
   }
 
   const handleFormSubmit = async (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to save a routine.", variant: "destructive" });
+        return;
+    }
     startTransition(async () => {
         const routineData = editingRoutine ? { ...data, id: editingRoutine.id } : data;
-        await callServerAction(() => saveRoutine(routineData), {
+        await callServerAction(() => saveRoutine(token, routineData), {
             toast,
             successMessage: editingRoutine ? "Routine Updated!" : "Routine Created!",
             errorMessage: "Failed to save routine"
@@ -102,8 +107,13 @@ export default function RoutinesPage() {
   };
 
   const handleDeleteRoutine = async (routineId: string) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to delete a routine.", variant: "destructive" });
+        return;
+    }
     startTransition(async () => {
-        await callServerAction(() => deleteRoutine(routineId), {
+        await callServerAction(() => deleteRoutine(token, routineId), {
             toast,
             successMessage: "Routine Deleted",
             errorMessage: "Failed to delete routine"
@@ -113,8 +123,13 @@ export default function RoutinesPage() {
   }
 
   const handleMarkAsDone = async (routine: Routine) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     startTransition(async () => {
-        await callServerAction(() => markRoutineAsDone(routine), {
+        await callServerAction(() => markRoutineAsDone(token, routine), {
             toast,
             successMessage: `Great job on "${routine.name}"! You've earned ${routine.rewardPoints} points.`,
             errorMessage: "Failed to mark as done"
@@ -124,8 +139,13 @@ export default function RoutinesPage() {
   }
 
   const handleUndoCompletion = async (routine: Routine) => {
+     const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     startTransition(async () => {
-        await callServerAction(() => undoCompletion(routine.id), {
+        await callServerAction(() => undoCompletion(token, routine.id), {
             toast,
             successMessage: `Completion for "${routine.name}" has been removed.`,
             errorMessage: "Failed to undo completion"

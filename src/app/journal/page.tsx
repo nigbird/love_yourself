@@ -10,18 +10,22 @@ import { BookHeart, PlusCircle, Home } from "lucide-react";
 import type { JournalEntry } from "@/domain/entities";
 import { getJournalEntries } from './actions';
 import { PageLayout } from "@/components/layout/page-layout";
+import { useAuth } from "@/components/auth/auth-provider";
 
 
 export default function JournalListPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const { getIdToken } = useAuth();
 
   useEffect(() => {
     async function fetchEntries() {
-      const dbEntries = await getJournalEntries();
+      const token = await getIdToken();
+      if (!token) return;
+      const dbEntries = await getJournalEntries(token);
       setEntries(dbEntries as JournalEntry[]);
     }
     fetchEntries();
-  }, []);
+  }, [getIdToken]);
 
   return (
     <PageLayout>

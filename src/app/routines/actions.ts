@@ -7,12 +7,10 @@ import { prisma } from '@/lib/db';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -26,8 +24,8 @@ async function getAuthenticatedUser() {
     }
 }
 
-export async function getRoutines() {
-  const user = await getAuthenticatedUser();
+export async function getRoutines(idToken: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) {
     return [];
   }
@@ -46,9 +44,9 @@ export async function getRoutines() {
   }));
 }
 
-export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
+export async function saveRoutine(idToken: string, routine: Omit<Routine, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = routine;
-  const user = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser(idToken);
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -75,8 +73,8 @@ export async function saveRoutine(routine: Omit<Routine, 'userId' | 'createdAt' 
 }
 
 
-export async function deleteRoutine(id: string) {
-  const user = await getAuthenticatedUser();
+export async function deleteRoutine(idToken: string, id: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -86,8 +84,8 @@ export async function deleteRoutine(id: string) {
   revalidatePath('/routines');
 }
 
-export async function getCompletionStatus() {
-  const user = await getAuthenticatedUser();
+export async function getCompletionStatus(idToken: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) return {};
 
   const logs = await prisma.routineCompletionLog.findMany({
@@ -101,8 +99,8 @@ export async function getCompletionStatus() {
   return status;
 }
 
-export async function markRoutineAsDone(routine: Routine) {
-    const user = await getAuthenticatedUser();
+export async function markRoutineAsDone(idToken: string, routine: Routine) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) throw new Error("User not authenticated");
 
     const today = new Date();
@@ -144,8 +142,8 @@ export async function markRoutineAsDone(routine: Routine) {
   revalidatePath('/'); // Revalidate root layout for points update
 }
 
-export async function undoCompletion(routineId: string) {
-    const user = await getAuthenticatedUser();
+export async function undoCompletion(idToken: string, routineId: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) throw new Error("User not authenticated");
 
     const today = new Date();

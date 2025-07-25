@@ -8,12 +8,10 @@ import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -27,15 +25,15 @@ async function getAuthenticatedUser() {
     }
 }
 
-export async function getUserRewardPoints() {
-    const user = await getAuthenticatedUser();
+export async function getUserRewardPoints(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return 0;
     return user.rewardPoints;
 }
 
 
-export async function getPointsHistory() {
-    const user = await getAuthenticatedUser();
+export async function getPointsHistory(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return { totalPoints: 0, history: [] };
 
     const routineLogs = await prisma.routineCompletionLog.findMany({
@@ -85,8 +83,8 @@ export async function getPointsHistory() {
 }
 
 
-export async function getRedeemableRewards() {
-    const user = await getAuthenticatedUser();
+export async function getRedeemableRewards(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return [];
     return prisma.redeemableReward.findMany({
         where: { userId: user.id },
@@ -94,9 +92,9 @@ export async function getRedeemableRewards() {
     });
 }
 
-export async function saveReward(reward: Omit<RedeemableReward, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
+export async function saveReward(idToken: string, reward: Omit<RedeemableReward, 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = reward;
-  const user = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser(idToken);
   if (!user) throw new Error("User not authenticated");
   
   const rewardData = {
@@ -119,8 +117,8 @@ export async function saveReward(reward: Omit<RedeemableReward, 'userId' | 'crea
   revalidatePath('/rewards');
 }
 
-export async function deleteReward(id: string) {
-    const user = await getAuthenticatedUser();
+export async function deleteReward(idToken: string, id: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) throw new Error("User not authenticated");
     await prisma.redeemableReward.delete({
         where: { id, userId: user.id },
@@ -128,8 +126,8 @@ export async function deleteReward(id: string) {
     revalidatePath('/rewards');
 }
 
-export async function redeemReward(reward: RedeemableReward) {
-    const user = await getAuthenticatedUser();
+export async function redeemReward(idToken: string, reward: RedeemableReward) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) throw new Error("User not authenticated");
 
     if (user.rewardPoints < reward.cost) {

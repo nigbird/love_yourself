@@ -36,7 +36,7 @@ export default function WishlistPage() {
         const token = await getIdToken();
         if (!token) throw new Error("Authentication required");
 
-        const dbWishes = await getWishes();
+        const dbWishes = await getWishes(token);
         setWishes(dbWishes as Wish[]);
     } catch (error) {
         console.error("Failed to fetch wishes", error);
@@ -60,9 +60,14 @@ export default function WishlistPage() {
   }
 
   const handleFormSubmit = async (data: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to save a wish.", variant: "destructive" });
+        return;
+    }
     try {
       const wishData = editingWish ? { ...data, id: editingWish.id } : data;
-      await saveWish(wishData);
+      await saveWish(token, wishData);
 
       await fetchWishes();
 
@@ -76,8 +81,13 @@ export default function WishlistPage() {
   };
 
   const handleDeleteWish = async (wishId: string) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to delete a wish.", variant: "destructive" });
+        return;
+    }
     try {
-        await deleteWish(wishId);
+        await deleteWish(token, wishId);
         setWishes(wishes.filter(w => w.id !== wishId));
         toast({ title: "Wish Removed", variant: 'destructive' });
     } catch (error) {
@@ -87,8 +97,13 @@ export default function WishlistPage() {
   }
 
   const handleFulfillWish = async (wish: Wish) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in to fulfill a wish.", variant: "destructive" });
+        return;
+    }
     try {
-        await fulfillWish(wish);
+        await fulfillWish(token, wish);
         setWishes(wishes.filter(w => w.id !== wish.id));
         toast({ title: "Wish Fulfilled!", description: `Congratulations on achieving "${wish.title}"!` });
     } catch (error) {

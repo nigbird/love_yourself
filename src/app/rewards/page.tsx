@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PageLayout } from '@/components/layout/page-layout';
+import { useAuth } from '@/components/auth/auth-provider';
 
 
 type PointsHistory = {
@@ -34,11 +35,15 @@ export default function RewardsPage() {
   const [editingReward, setEditingReward] = useState<RedeemableReward | null>(null);
   const [totalPoints, setTotalPoints] = useState(0);
   const { toast } = useToast();
+  const { getIdToken } = useAuth();
 
   const fetchData = async () => {
+      const token = await getIdToken();
+      if (!token) return;
+
       const [pointsHistory, redeemableRewards] = await Promise.all([
-          getPointsHistory(),
-          getRedeemableRewards(),
+          getPointsHistory(token),
+          getRedeemableRewards(token),
       ]);
       setHistory(pointsHistory.history);
       setTotalPoints(pointsHistory.totalPoints);
@@ -47,7 +52,7 @@ export default function RewardsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [getIdToken]);
 
   const openCreateForm = () => {
     setEditingReward(null);
@@ -60,9 +65,14 @@ export default function RewardsPage() {
   }
 
   const handleFormSubmit = async (data: Omit<RedeemableReward, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     try {
         const rewardData = editingReward ? { ...data, id: editingReward.id } : data;
-        await saveReward(rewardData);
+        await saveReward(token, rewardData);
         toast({ title: editingReward ? "Reward Updated!" : "Reward Created!" });
         fetchData(); // Refetch all data
         setIsFormOpen(false);
@@ -74,12 +84,17 @@ export default function RewardsPage() {
   };
 
   const handleRedeem = async (reward: RedeemableReward) => {
+      const token = await getIdToken();
+      if (!token) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+      }
       if (totalPoints < reward.cost) {
           toast({ title: "Not enough points!", description: "Complete more routines and goals to earn points.", variant: "destructive" });
           return;
       }
       try {
-        await redeemReward(reward);
+        await redeemReward(token, reward);
         toast({ title: "Reward Redeemed!", description: `You've redeemed "${reward.title}"!` });
         fetchData(); // Refetch all data
       } catch (error) {
@@ -89,8 +104,13 @@ export default function RewardsPage() {
   }
 
   const handleDelete = async (rewardId: string) => {
+    const token = await getIdToken();
+    if (!token) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
     try {
-        await deleteReward(rewardId);
+        await deleteReward(token, rewardId);
         toast({ title: "Reward Deleted", variant: "destructive" });
         fetchData();
     } catch (error) {
@@ -225,5 +245,3 @@ export default function RewardsPage() {
     </PageLayout>
   );
 }
-
-    

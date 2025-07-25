@@ -8,12 +8,10 @@ import { adminAuth } from '@/lib/firebase/admin';
 
 type TimeRange = 'weekly' | 'monthly' | 'yearly';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -27,8 +25,8 @@ async function getAuthenticatedUser() {
     }
 }
 
-export const getAnalyticsData = async (timeRange: TimeRange) => {
-    const user = await getAuthenticatedUser();
+export const getAnalyticsData = async (idToken: string, timeRange: TimeRange) => {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return { routines: [], goals: [] };
 
     const now = new Date();

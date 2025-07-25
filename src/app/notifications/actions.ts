@@ -7,12 +7,10 @@ import { startOfToday } from 'date-fns';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -26,8 +24,8 @@ async function getAuthenticatedUser() {
     }
 }
 
-export async function getUnreadNotifications() {
-    const user = await getAuthenticatedUser();
+export async function getUnreadNotifications(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return { notifications: [], count: 0 };
 
     const notifications = await prisma.notification.findMany({
@@ -40,8 +38,8 @@ export async function getUnreadNotifications() {
     return { notifications, count };
 }
 
-export async function markAllNotificationsAsRead() {
-    const user = await getAuthenticatedUser();
+export async function markAllNotificationsAsRead(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return;
     await prisma.notification.updateMany({
         where: { userId: user.id, read: false },
@@ -66,8 +64,8 @@ export async function createReminderNotification(routineId: string) {
 }
 
 // This function is used by the reminder provider to get necessary routine data efficiently
-export async function getRoutinesForReminders() {
-    const user = await getAuthenticatedUser();
+export async function getRoutinesForReminders(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) return [];
     
     const today = startOfToday();

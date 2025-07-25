@@ -7,12 +7,10 @@ import { prisma } from '@/lib/db';
 import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
-async function getAuthenticatedUser() {
-    const authorization = headers().get('Authorization');
-    if (!authorization?.startsWith('Bearer ')) {
+async function getAuthenticatedUser(idToken: string) {
+    if (!idToken) {
         return null;
     }
-    const idToken = authorization.split('Bearer ')[1];
     
     try {
         const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -26,8 +24,8 @@ async function getAuthenticatedUser() {
     }
 }
 
-export async function getWishes() {
-  const user = await getAuthenticatedUser();
+export async function getWishes(idToken: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) return [];
   return prisma.wish.findMany({
     where: { userId: user.id },
@@ -37,9 +35,9 @@ export async function getWishes() {
   });
 }
 
-export async function saveWish(wish: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
+export async function saveWish(idToken: string, wish: Omit<Wish, 'id' | 'userId' | 'createdAt' | 'updatedAt'> & { id?: string }) {
   const { id, ...data } = wish;
-  const user = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser(idToken);
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -64,8 +62,8 @@ export async function saveWish(wish: Omit<Wish, 'id' | 'userId' | 'createdAt' | 
 }
 
 
-export async function deleteWish(id: string) {
-  const user = await getAuthenticatedUser();
+export async function deleteWish(idToken: string, id: string) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) throw new Error("User not authenticated");
   await prisma.wish.delete({
     where: { id, userId: user.id },
@@ -73,8 +71,8 @@ export async function deleteWish(id: string) {
   revalidatePath('/wish');
 }
 
-export async function fulfillWish(wish: Wish) {
-  const user = await getAuthenticatedUser();
+export async function fulfillWish(idToken: string, wish: Wish) {
+  const user = await getAuthenticatedUser(idToken);
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -100,8 +98,8 @@ export async function fulfillWish(wish: Wish) {
   revalidatePath('/analytics');
 }
 
-export async function getFulfilledWishes() {
-    const user = await getAuthenticatedUser();
+export async function getFulfilledWishes(idToken: string) {
+    const user = await getAuthenticatedUser(idToken);
     if (!user) {
         return [];
     }
