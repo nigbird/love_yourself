@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, FirebaseError } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ export default function LoginPage() {
       let title = 'Login Failed';
       let description = 'An unexpected error occurred. Please try again.';
 
-      if (error instanceof FirebaseError) {
+      if (error && error.code) {
         if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
             title = 'Invalid Credentials';
             description = 'The email or password you entered is incorrect. Please try again.';
