@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/carousel';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { differenceInMinutes } from 'date-fns';
 
 interface NavItem {
   href: string;
@@ -65,8 +66,23 @@ export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
   const { dbUser } = useAuth();
+
+  const getWelcomeMessage = () => {
+    if (!dbUser || !dbUser.name) {
+      return "Hey, roots before roses";
+    }
+
+    const accountAgeInMinutes = differenceInMinutes(new Date(), new Date(dbUser.createdAt));
+    
+    // If the account is less than 5 minutes old, consider them a new user for this session.
+    if (accountAgeInMinutes < 5) {
+      return `welcome ${dbUser.name}, this is your space — to grow, heal, and bloom`;
+    }
+
+    return `${dbUser.name} welcome back to your daily magic.`;
+  };
   
-  const welcomeMessage = dbUser?.name ? `Hey ${dbUser.name}, roots before roses` : "Hey, roots before roses";
+  const welcomeMessage = getWelcomeMessage();
 
   useEffect(() => {
     if (!api) {
@@ -132,7 +148,7 @@ export default function HomePage() {
                       }}
                     ></div>
                     <div className="relative z-10 flex flex-col items-center justify-center text-center p-2">
-                      <item.icon className={`w-1/2 h-1/2 ${item.color}`} />
+                      <item.icon className={`w-16 h-16 ${item.color}`} />
                       <span
                         className={`mt-2 text-sm md:text-lg font-bold ${item.color}`}
                       >
