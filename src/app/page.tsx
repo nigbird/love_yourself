@@ -69,7 +69,7 @@ export default function HomePage() {
 
   const getWelcomeMessage = () => {
     if (!dbUser || !dbUser.name) {
-      return "Hey, roots before roses";
+      return "welcome, this is your space — to grow, heal, and bloom";
     }
 
     const accountAgeInMinutes = differenceInMinutes(new Date(), new Date(dbUser.createdAt));
@@ -79,7 +79,7 @@ export default function HomePage() {
       return `welcome ${dbUser.name}, this is your space — to grow, heal, and bloom`;
     }
 
-    return `${dbUser.name} welcome back to your daily magic.`;
+    return `Good to have you back, ${dbUser.name} ,Let’s keep blooming`;
   };
   
   const welcomeMessage = getWelcomeMessage();
@@ -148,7 +148,7 @@ export default function HomePage() {
                       }}
                     ></div>
                     <div className="relative z-10 flex flex-col items-center justify-center text-center p-2">
-                      <item.icon className={`w-16 h-16 ${item.color}`} />
+                      <item.icon className={`w-20 h-20 ${item.color}`} />
                       <span
                         className={`mt-2 text-sm md:text-lg font-bold ${item.color}`}
                       >
