@@ -37,6 +37,9 @@ export default function LoginPage() {
         if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
             title = 'Invalid Credentials';
             description = 'The email or password you entered is incorrect. Please try again.';
+        } else if (error.code === 'auth/too-many-requests') {
+            title = 'Access Temporarily Disabled';
+            description = 'Due to too many failed login attempts, access from this device has been temporarily disabled. Please try again later.';
         }
       }
       
