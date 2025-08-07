@@ -2,7 +2,6 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { headers } from 'next/headers';
 import { adminAuth } from '@/lib/firebase/admin';
 
 async function getAuthenticatedUser(idToken: string) {

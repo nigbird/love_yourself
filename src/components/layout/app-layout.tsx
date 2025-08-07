@@ -2,37 +2,23 @@
 'use client';
 
 import type { ReactNode } from "react";
-import { HeartHandshake, Star, LogOut, Settings } from 'lucide-react';
+import { HeartHandshake, Star, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationCenter } from "../notifications/notification-center";
 import { Button } from "../ui/button";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import type { User } from "@/domain/entities";
+import { UserNav } from './user-nav';
 
 interface AppLayoutProps {
   children: ReactNode;
-  isLoggedIn: boolean;
-  points: number;
+  user: User | null;
 }
 
-export function AppLayout({ children, isLoggedIn, points }: AppLayoutProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({ title: 'Logged out successfully.' });
-      router.push('/login');
-    } catch (error) {
-      console.error("Error signing out: ", error);
-      toast({ title: 'Logout Failed', description: 'Could not log you out.', variant: 'destructive' });
-    }
-  };
+export function AppLayout({ children, user }: AppLayoutProps) {
+  const isLoggedIn = !!user;
+  const points = user?.rewardPoints ?? 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -63,31 +49,7 @@ export function AppLayout({ children, isLoggedIn, points }: AppLayoutProps) {
 
                  <NotificationCenter />
                  
-                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Link href="/settings" className="text-muted-foreground hover:text-primary transition-colors">
-                            <Settings/>
-                           </Link>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Settings</p>
-                        </TooltipContent>
-                    </Tooltip>
-                 </TooltipProvider>
-
-                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button onClick={handleLogout} className="text-muted-foreground hover:text-primary transition-colors">
-                            <LogOut />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Logout</p>
-                        </TooltipContent>
-                    </Tooltip>
-                 </TooltipProvider>
+                 <UserNav />
 
               </nav>
           ) : (

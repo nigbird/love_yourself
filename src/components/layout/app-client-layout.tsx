@@ -17,12 +17,12 @@ export function AppClientLayout({
   const { user, dbUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-
+  
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isAuthRoute = authRoutes.includes(pathname);
+  
   useEffect(() => {
     if (!loading) {
-      const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-      const isAuthRoute = authRoutes.includes(pathname);
-
       if (!user && isProtectedRoute) {
         router.push('/login');
       }
@@ -30,20 +30,16 @@ export function AppClientLayout({
         router.push('/');
       }
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router, pathname, isAuthRoute, isProtectedRoute]);
 
-  // Don't render layout for auth pages until loading is complete
-  if (loading && authRoutes.includes(pathname)) {
+  // For auth pages, render children directly without the main layout
+  // This prevents the layout from showing on login/signup pages
+  if (isAuthRoute) {
     return <>{children}</>;
   }
 
-  // Allow auth pages to render without the main layout shell
-  if (!user && authRoutes.includes(pathname)) {
-      return <>{children}</>;
-  }
-
   return (
-    <AppLayout isLoggedIn={!!user} points={dbUser?.rewardPoints ?? 0}>
+    <AppLayout user={dbUser}>
       {children}
     </AppLayout>
   );
