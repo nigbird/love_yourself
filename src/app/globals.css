@@ -1,65 +1,66 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 224 71% 4%; /* Midnight Blue */
-    --foreground: 210 40% 98%;
-    --card: 224 71% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 175 80% 35%; /* Teal */
-    --primary-foreground: 175 80% 95%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 45 100% 70%; /* Gold Glow */
-    --accent-foreground: 45 100% 10%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 27%;
-    --input: 217 33% 22%;
-    --ring: 175 80% 45%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 210 90% 60%;
+    --primary-foreground: 210 90% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 210 90% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 210 90% 60%;
     --radius: 0.8rem;
-    --chart-1: 175 70% 40%;
-    --chart-2: 45 90% 60%;
-    --chart-3: 175 80% 50%;
-    --chart-4: 45 100% 70%;
-    --chart-5: 175 90% 60%;
+    --chart-1: 210 80% 50%;
+    --chart-2: 160 80% 40%;
+    --chart-3: 340 90% 60%;
+    --chart-4: 40 90% 60%;
+    --chart-5: 280 80% 50%;
     --paper: 40 33% 96%;
     --paper-foreground: 224 71% 10%;
   }
 
   .dark {
-    --background: 224 71% 4%; /* Midnight Blue */
-    --foreground: 210 40% 98%;
-    --card: 224 71% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 175 80% 35%; /* Teal */
-    --primary-foreground: 175 80% 95%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 45 100% 70%; /* Gold Glow */
-    --accent-foreground: 45 100% 10%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 27%;
-    --input: 217 33% 22%;
-    --ring: 175 80% 45%;
-    --chart-1: 175 70% 40%;
-    --chart-2: 45 90% 60%;
-    --chart-3: 175 80% 50%;
-    --chart-4: 45 100% 70%;
-    --chart-5: 175 90% 60%;
-    --paper: 40 33% 96%;
-    --paper-foreground: 224 71% 10%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 210 90% 60%;
+    --primary-foreground: 210 90% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 210 90% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 210 90% 60%;
+    --chart-1: 210 80% 50%;
+    --chart-2: 160 80% 40%;
+    --chart-3: 340 90% 60%;
+    --chart-4: 40 90% 60%;
+    --chart-5: 280 80% 50%;
+    --paper: 240 10% 3.9%;
+    --paper-foreground: 0 0% 98%;
   }
 }
 

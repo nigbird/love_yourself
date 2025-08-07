@@ -10,6 +10,7 @@ import { NotificationCenter } from "../notifications/notification-center";
 import { Button } from "../ui/button";
 import type { User } from "@/domain/entities";
 import { UserNav } from './user-nav';
+import { ThemeSwitcher } from "./theme-switcher";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -49,11 +50,14 @@ export function AppLayout({ children, user }: AppLayoutProps) {
 
                  <NotificationCenter />
                  
+                 <ThemeSwitcher />
+
                  <UserNav />
 
               </nav>
           ) : (
             <nav className="flex items-center gap-2">
+                <ThemeSwitcher />
                 <Button asChild variant="ghost">
                     <Link href="/login">Login</Link>
                 </Button>
