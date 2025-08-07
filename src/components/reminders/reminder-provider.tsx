@@ -20,18 +20,33 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const remindersSentThisSession = useRef<Set<string>>(new Set());
 
-  // Create the audio element on the client
+  // Create and preload the audio element on the client
   useEffect(() => {
     if (typeof window !== 'undefined') {
         audioRef.current = new Audio('/notification.mp3');
+        audioRef.current.preload = 'auto';
     }
   }, []);
 
   const playNotificationSound = useCallback(() => {
     if (soundEnabled && audioRef.current) {
-        audioRef.current.play().catch(error => {
-            console.error("Audio play failed:", error);
-        });
+        // Ensure the audio is ready before playing
+        if (audioRef.current.readyState >= 2) { // HAVE_CURRENT_DATA
+            audioRef.current.play().catch(error => {
+                console.error("Audio play failed:", error);
+            });
+        } else {
+            // If not ready, attach a listener to play when it can
+            const playWhenReady = () => {
+                audioRef.current?.play().catch(error => console.error("Audio play failed on canplaythrough:", error));
+                audioRef.current?.removeEventListener('canplaythrough', playWhenReady);
+            };
+            audioRef.current.addEventListener('canplaythrough', playWhenReady);
+            // Also add a timeout as a fallback
+            setTimeout(() => {
+                audioRef.current?.removeEventListener('canplaythrough', playWhenReady);
+            }, 3000);
+        }
     }
   }, [soundEnabled]);
 

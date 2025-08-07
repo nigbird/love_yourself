@@ -71,21 +71,6 @@ export default function SettingsPage() {
                 onCheckedChange={setSoundEnabled}
               />
             </div>
-             <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <Label htmlFor="email-notifications" className="text-base">
-                  Email Notifications
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive weekly progress summary via email. (Coming soon)
-                </p>
-              </div>
-              <Switch
-                id="email-notifications"
-                aria-label="Toggle email notifications"
-                disabled
-              />
-            </div>
           </CardContent>
         </Card>
 
