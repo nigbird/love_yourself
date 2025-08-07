@@ -16,7 +16,16 @@ type RoutineForReminder = Pick<Routine, 'id' | 'name' | 'frequency' | 'daysOfWee
 export function ReminderProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { getIdToken } = useAuth();
+  const { soundEnabled } = useSettings();
   const remindersSentThisSession = useRef<Set<string>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Initialize the audio object once on the client
+    audioRef.current = new Audio('/notification.mp3');
+    audioRef.current.preload = 'auto';
+  }, []);
+
 
   const checkReminders = useCallback(async () => {
     const token = await getIdToken();
@@ -54,14 +63,22 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
           toast({
             title: "🔔 New Reminder!",
             description: `It's time for your "${routine.name}" routine!`,
-            variant: "info"
           });
+
+          if (soundEnabled && audioRef.current) {
+            audioRef.current.play().catch(error => {
+                console.error("Error playing notification sound:", error);
+                // This error can happen if the user hasn't interacted with the page yet,
+                // or if the file doesn't exist.
+            });
+          }
+
         } catch (error) {
             console.error("Failed to create reminder notification:", error);
         }
       }
     }
-  }, [toast, getIdToken]);
+  }, [toast, getIdToken, soundEnabled]);
 
   useEffect(() => {
     // Check reminders immediately on load, then every minute
