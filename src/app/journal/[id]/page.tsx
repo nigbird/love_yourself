@@ -20,21 +20,22 @@ export default function JournalEntryPage() {
     async function loadEntry() {
         if (!entryId) return;
 
+        // For a new entry, create a temporary object immediately without waiting.
+        // This makes the editor appear instantly. The real userId will be attached on save.
         if (entryId === 'new') {
-            if (user) { // Only create a new entry if the user is available
-                setEntry({
-                    id: `new-${Date.now()}`,
-                    userId: user.uid,
-                    title: "New Thought",
-                    content: "",
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    mood: "😊",
-                });
-            }
+            setEntry({
+                id: `new-${Date.now()}`,
+                userId: user?.uid || 'temp-user', // Use a temporary ID
+                title: "New Thought",
+                content: "",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                mood: "😊",
+            });
             return;
         }
 
+        // For an existing entry, we must wait for the token to fetch it.
         const token = await getIdToken();
         if (!token) {
             // Not logged in, can't fetch an existing entry.
@@ -56,4 +57,3 @@ export default function JournalEntryPage() {
     </PageLayout>
   );
 }
-
