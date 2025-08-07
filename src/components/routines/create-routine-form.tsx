@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { Routine } from '@/domain/entities/routine.entity';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -34,6 +34,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface CreateRoutineFormProps {
   onRoutineCreated: (data: Omit<Routine, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   routineToEdit?: Routine;
+  isSubmitting: boolean;
 }
 
 const weekDays = [
@@ -46,8 +47,7 @@ const weekDays = [
     { label: 'S', value: '6' },
 ];
 
-export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRoutineFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function CreateRoutineForm({ onRoutineCreated, routineToEdit, isSubmitting }: CreateRoutineFormProps) {
   const { register, handleSubmit, control, watch, formState: { errors }, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -85,12 +85,7 @@ export function CreateRoutineForm({ onRoutineCreated, routineToEdit }: CreateRou
   const watchedFrequency = watch('frequency');
 
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
-    try {
-        await onRoutineCreated(data as any);
-    } finally {
-        setIsSubmitting(false);
-    }
+    await onRoutineCreated(data as any);
   };
 
   return (

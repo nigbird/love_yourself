@@ -95,14 +95,17 @@ export default function RoutinesPage() {
     }
     startTransition(async () => {
         const routineData = editingRoutine ? { ...data, id: editingRoutine.id } : data;
-        await callServerAction(() => saveRoutine(token, routineData), {
+        const result = await callServerAction(() => saveRoutine(token, routineData), {
             toast,
             successMessage: editingRoutine ? "Routine Updated!" : "Routine Created!",
             errorMessage: "Failed to save routine"
         });
-        await fetchData();
-        setIsFormOpen(false);
-        setEditingRoutine(null);
+        
+        if (result !== null) {
+            await fetchData();
+            setIsFormOpen(false);
+            setEditingRoutine(null);
+        }
     });
   };
 
@@ -189,6 +192,7 @@ export default function RoutinesPage() {
                         <CreateRoutineForm 
                           onRoutineCreated={handleFormSubmit} 
                           routineToEdit={editingRoutine || undefined}
+                          isSubmitting={isPending}
                         />
                     </DialogContent>
                 </Dialog>
