@@ -34,28 +34,37 @@ export function NotificationCenter() {
     setCount(count);
   };
 
-  useEffect(() => {
-    // Fetch notifications when the popover opens
-    if (isOpen) {
-      fetchNotifications();
+  const handleMarkAsRead = async () => {
+    // No need to wrap in transition if we don't have a pending state for the button
+    const token = await getIdToken();
+    if (!token || count === 0) return;
+    try {
+      await markAllNotificationsAsRead(token);
+      await fetchNotifications();
+    } catch (error) {
+      console.error("Failed to mark notifications as read:", error);
     }
-  }, [isOpen, getIdToken]);
+  };
   
-  // Also fetch periodically while app is open
+  // Fetch periodically while app is open
   useEffect(() => {
       fetchNotifications(); // initial fetch
       const interval = setInterval(fetchNotifications, 60000); // every minute
       return () => clearInterval(interval);
   }, [getIdToken]);
 
-  const handleMarkAsRead = () => {
-    startTransition(async () => {
-      const token = await getIdToken();
-      if (!token) return;
-      await markAllNotificationsAsRead(token);
-      await fetchNotifications();
-    });
-  };
+  useEffect(() => {
+    // When the popover opens, fetch the latest notifications
+    // and then mark them as read.
+    if (isOpen) {
+      fetchNotifications().then(() => {
+        // We delay marking as read slightly to allow the user to see the unread state briefly.
+        setTimeout(() => {
+          handleMarkAsRead();
+        }, 1000); 
+      });
+    }
+  }, [isOpen]);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -83,12 +92,6 @@ export function NotificationCenter() {
         <div className="p-4">
           <div className="flex justify-between items-center">
             <h4 className="font-medium text-lg text-primary">Notifications</h4>
-            {notifications.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleMarkAsRead} disabled={isPending}>
-                  <CheckCheck className="mr-2 h-4 w-4" />
-                  Mark all as read
-                </Button>
-            )}
           </div>
         </div>
         <Separator />
