@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -31,15 +31,19 @@ import { useAuth } from "@/components/auth/auth-provider";
 
 const moods = ["😊", "😢", "😠", "😍", "🤔", "😴", "None"];
 
-export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | null }) {
-  const [currentEntry, setCurrentEntry] = useState<JournalEntry | null>(initialEntry);
+interface JournalEditorProps {
+  entry: JournalEntry | null;
+  onEntryChange: (newEntry: JournalEntry) => void;
+  onEntrySave: (entryToSave: JournalEntry) => Promise<JournalEntry | null | undefined>;
+}
+
+export function JournalEditor({ entry: currentEntry, onEntryChange, onEntrySave }: JournalEditorProps) {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, startSavingTransition] = useTransition();
   
   const { toast } = useToast();
   const router = useRouter();
   const { getIdToken } = useAuth();
-
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -54,11 +58,13 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
 
   const handleUpdateEntry = (field: keyof JournalEntry, value: any) => {
     if (currentEntry) {
-      if (field === 'mood' && value === 'None') {
-        setCurrentEntry({ ...currentEntry, mood: undefined });
-      } else {
-        setCurrentEntry({ ...currentEntry, [field]: value });
-      }
+        const updatedEntry = {...currentEntry};
+        if (field === 'mood' && value === 'None') {
+            updatedEntry.mood = undefined;
+        } else {
+            updatedEntry[field] = value;
+        }
+        onEntryChange(updatedEntry);
     }
   }
 
@@ -71,27 +77,23 @@ export function JournalEditor({ initialEntry }: { initialEntry: JournalEntry | n
       });
       return;
     }
-    setIsSaving(true);
-    const isNew = currentEntry.id.startsWith('new-');
-
-    try {
-        const token = await getIdToken();
-        if (!token) throw new Error("Authentication required");
-
-        const savedEntry = await saveJournalEntry(token, currentEntry);
-        toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
-        if (isNew) {
-            router.replace(`/journal/${savedEntry.id}`);
-            // We don't need to manually update state, the redirect will cause a re-fetch
-        } else {
-            setCurrentEntry(savedEntry as JournalEntry);
+    
+    startSavingTransition(async () => {
+        try {
+            const isNew = currentEntry.id.startsWith('new-');
+            const savedEntry = await onEntrySave(currentEntry);
+            if (savedEntry) {
+                toast({ title: isNew ? "Entry Saved!" : "Entry Updated!", description: "Your journal has been updated." });
+                if (isNew) {
+                    // Redirect to the new entry's page, which will cause a full reload of data
+                    router.replace(`/journal/${savedEntry.id}`);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to save entry:", error);
+            toast({ title: "Error Saving", description: "Could not save your entry.", variant: "destructive" });
         }
-    } catch (error) {
-        console.error("Failed to save entry:", error);
-        toast({ title: "Error Saving", description: "Could not save your entry.", variant: "destructive" });
-    } finally {
-        setIsSaving(false);
-    }
+    });
   };
 
   const handleDeleteEntry = async () => {

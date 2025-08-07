@@ -1,11 +1,11 @@
 
 'use client';
 
-import { getJournalEntry } from '../actions';
+import { getJournalEntry, saveJournalEntry as saveEntryAction } from '../actions';
 import { JournalEditor } from './editor';
 import { PageLayout } from '@/components/layout/page-layout';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { JournalEntry } from '@/domain/entities';
 import { usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -18,35 +18,32 @@ export default function JournalEntryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { getIdToken, user } = useAuth();
   
+  // This memoization prevents the new entry from being recreated on every render
+  const newEntryTemplate = useCallback(() => ({
+      id: `new-${Date.now()}`,
+      userId: user?.uid || 'temp-user',
+      title: "New Thought",
+      content: "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      mood: "😊",
+  }), [user?.uid]);
+
   // If this is a new entry, we create a placeholder immediately.
-  // This avoids waiting for useEffect and makes the editor appear instantly.
   if (entryId === 'new' && !entry) {
-    const newEntry: JournalEntry = {
-        id: `new-${Date.now()}`,
-        userId: user?.uid || 'temp-user',
-        title: "New Thought",
-        content: "",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        mood: "😊",
-    };
-    setEntry(newEntry);
+    setEntry(newEntryTemplate());
     setIsLoading(false);
   }
 
   useEffect(() => {
     // This effect is now only for fetching EXISTING entries.
-    if (entryId === 'new') {
-        setIsLoading(false);
+    if (entryId === 'new' || !user) {
+        if (entryId === 'new') setIsLoading(false);
         return;
     }
 
     async function loadExistingEntry() {
-        if (!user) {
-            // Wait for the user object to be available.
-            return;
-        }
-        
+        setIsLoading(true);
         try {
             const token = await getIdToken();
             if (!token) {
@@ -63,10 +60,21 @@ export default function JournalEntryPage() {
         }
     }
     
-    setIsLoading(true);
     loadExistingEntry();
 
   }, [entryId, user, getIdToken]); 
+  
+  const handleSave = async (entryToSave: JournalEntry) => {
+    const token = await getIdToken();
+    if (!token) {
+        throw new Error("Authentication required");
+    }
+    const savedEntry = await saveEntryAction(token, entryToSave);
+    // After saving, we update the local state with the final version from the server.
+    // This is especially important for new entries to get the real ID.
+    setEntry(savedEntry as JournalEntry);
+    return savedEntry;
+  };
 
   if (isLoading) {
     return (
@@ -81,7 +89,11 @@ export default function JournalEntryPage() {
 
   return (
     <PageLayout showBackButton={false}>
-      <JournalEditor initialEntry={entry} />
+      <JournalEditor 
+        entry={entry}
+        onEntryChange={setEntry}
+        onEntrySave={handleSave}
+      />
     </PageLayout>
   );
 }
