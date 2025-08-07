@@ -14,41 +14,9 @@ type RoutineForReminder = Pick<Routine, 'id' | 'name' | 'frequency' | 'daysOfWee
 
 
 export function ReminderProvider({ children }: { children: React.ReactNode }) {
-  const { soundEnabled } = useSettings();
   const { toast } = useToast();
   const { getIdToken } = useAuth();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const remindersSentThisSession = useRef<Set<string>>(new Set());
-
-  // Create and preload the audio element on the client
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-        audioRef.current = new Audio('/notification.mp3');
-        audioRef.current.preload = 'auto';
-    }
-  }, []);
-
-  const playNotificationSound = useCallback(() => {
-    if (soundEnabled && audioRef.current) {
-        // Ensure the audio is ready before playing
-        if (audioRef.current.readyState >= 2) { // HAVE_CURRENT_DATA
-            audioRef.current.play().catch(error => {
-                console.error("Audio play failed:", error);
-            });
-        } else {
-            // If not ready, attach a listener to play when it can
-            const playWhenReady = () => {
-                audioRef.current?.play().catch(error => console.error("Audio play failed on canplaythrough:", error));
-                audioRef.current?.removeEventListener('canplaythrough', playWhenReady);
-            };
-            audioRef.current.addEventListener('canplaythrough', playWhenReady);
-            // Also add a timeout as a fallback
-            setTimeout(() => {
-                audioRef.current?.removeEventListener('canplaythrough', playWhenReady);
-            }, 3000);
-        }
-    }
-  }, [soundEnabled]);
 
   const checkReminders = useCallback(async () => {
     const token = await getIdToken();
@@ -82,11 +50,10 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
         try {
           await createReminderNotification(routine.id);
           remindersSentThisSession.current.add(reminderId);
-          playNotificationSound();
            // Optional: Show a toast as instant feedback, though the primary mechanism is the notification center
           toast({
             title: "🔔 New Reminder!",
-            description: `Check your notification center for details.`,
+            description: `It's time for your "${routine.name}" routine!`,
             variant: "info"
           });
         } catch (error) {
@@ -94,7 +61,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [playNotificationSound, toast, getIdToken]);
+  }, [toast, getIdToken]);
 
   useEffect(() => {
     // Check reminders immediately on load, then every minute
