@@ -18,22 +18,27 @@ export default function JournalEntryPage() {
   
   useEffect(() => {
     async function loadEntry() {
+        if (!entryId) return;
+
         if (entryId === 'new') {
-            setEntry({
-                id: `new-${Date.now()}`,
-                userId: user?.uid || 'new-user', // This will be replaced on save by the server action
-                title: "New Thought",
-                content: "",
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                mood: "😊",
-            });
+            if (user) { // Only create a new entry if the user is available
+                setEntry({
+                    id: `new-${Date.now()}`,
+                    userId: user.uid,
+                    title: "New Thought",
+                    content: "",
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    mood: "😊",
+                });
+            }
             return;
         }
 
         const token = await getIdToken();
         if (!token) {
-            // Handle not authenticated state if necessary
+            // Not logged in, can't fetch an existing entry.
+            // Maybe redirect or show an error. For now, we'll just stop.
             return;
         }
         
@@ -41,9 +46,7 @@ export default function JournalEntryPage() {
         setEntry(fetchedEntry);
     }
     
-    if(entryId){
-      loadEntry();
-    }
+    loadEntry();
 
   }, [entryId, getIdToken, user]);
 
@@ -53,3 +56,4 @@ export default function JournalEntryPage() {
     </PageLayout>
   );
 }
+
