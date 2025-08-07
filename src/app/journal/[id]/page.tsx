@@ -17,39 +17,47 @@ export default function JournalEntryPage() {
   const { getIdToken, user } = useAuth();
   
   useEffect(() => {
-    async function loadEntry() {
-        if (!entryId) return;
+    // If this is a new entry, create a placeholder immediately.
+    // This makes the editor appear instantly for a new post.
+    if (entryId === 'new') {
+        setEntry({
+            id: `new-${Date.now()}`,
+            userId: user?.uid || 'temp-user', // Use a temporary ID; real one is set on save.
+            title: "New Thought",
+            content: "",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            mood: "😊",
+        });
+        return; // Stop here for new entries.
+    }
 
-        // For a new entry, create a temporary object immediately without waiting.
-        // This makes the editor appear instantly. The real userId will be attached on save.
-        if (entryId === 'new') {
-            setEntry({
-                id: `new-${Date.now()}`,
-                userId: user?.uid || 'temp-user', // Use a temporary ID
-                title: "New Thought",
-                content: "",
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                mood: "😊",
-            });
-            return;
-        }
-
-        // For an existing entry, we must wait for the token to fetch it.
-        const token = await getIdToken();
-        if (!token) {
-            // Not logged in, can't fetch an existing entry.
-            // Maybe redirect or show an error. For now, we'll just stop.
+    // For existing entries, we need to fetch the data.
+    async function loadExistingEntry() {
+        if (!user) {
+            // We need to wait for the user to be available to get the token.
+            // If the user is not yet available, this effect will re-run when it is.
             return;
         }
         
-        const fetchedEntry = await getJournalEntry(token, entryId);
-        setEntry(fetchedEntry);
+        try {
+            const token = await getIdToken();
+            if (!token) {
+                console.error("Could not get auth token.");
+                // Optionally set an error state here.
+                return;
+            }
+            const fetchedEntry = await getJournalEntry(token, entryId);
+            setEntry(fetchedEntry);
+        } catch (error) {
+            console.error("Failed to fetch journal entry:", error);
+            // Optionally set an error state here.
+        }
     }
     
-    loadEntry();
+    loadExistingEntry();
 
-  }, [entryId, getIdToken, user]);
+  }, [entryId, getIdToken, user]); // Depend on `user` to re-run when auth state is resolved.
 
   return (
     <PageLayout showBackButton={false}>
